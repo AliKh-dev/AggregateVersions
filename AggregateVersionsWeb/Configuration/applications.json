@@ -1,0 +1,17 @@
+[
+  {
+    "ID": "C64FA529-34C0-431B-8E65-184C69C0F30C",
+    "Name": "CounterpartyApi",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  },
+  {
+    "ID": "304B915E-D9CE-42A2-AFA9-222F42A94F05",
+    "Name": "CounterpartyJob",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  },
+  {
+    "ID": "F2D618AB-3F0B-408D-9455-CEB97A4076A1",
+    "Name": "CounterpartyWeb",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  }
+]

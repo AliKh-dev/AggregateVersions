@@ -1,0 +1,16 @@
+﻿مقدار موجود در فایل
+71550CON1223SA-appsettings.json
+را به فایل 
+appsettings.json
+اضافه کنید.
+
+در صورتی که 
+Otel
+بر روی سرور عملیاتی کانفیگ شده است
+{OtelAddress}
+مقدار بالا را جایگزین نمایید.
+
+در غیر اینصورت 
+OpenTelemetry:Enable
+false
+نمایید

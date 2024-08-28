@@ -1,0 +1,19 @@
+﻿@model Application
+
+
+<div class="container">
+    <h1>Add @nameof(Application)</h1>
+    <form asp-controller="Applications" asp-action="Add" method="post">
+        <div class="mb-3">
+            <label class="form-label" asp-for="Name">@nameof(Application) Name</label>
+            <input class="form-control" type="text" asp-for="Name" value="@Model.Name" required />
+        </div>
+        <div >
+            <input type="hidden" asp-for="ProjectID" value="@Model.ProjectID" />
+        </div>
+        <div >
+            <button type="submit" class="btn btn-success">Save</button>
+            <a asp-controller="Projects" asp-action="Details" asp-route-projectID="@Model.ProjectID" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

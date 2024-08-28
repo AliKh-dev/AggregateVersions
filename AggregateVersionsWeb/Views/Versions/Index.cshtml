@@ -1,0 +1,107 @@
+﻿@model List<Project>
+@{
+    ViewData["Title"] = "Version Page";
+}
+
+<form asp-controller="Versions" asp-action="Index" method="post">
+    <div class="mb-4">
+        <label class="form-label" for="git-online-service">Git online service:</label>
+        <select class="form-select" id="git-online-service" name="gitOnlineService">
+            <option value="github">Github</option>
+            <option value="bitbucket">Bitbucket</option>
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="username">Username:</label>
+        <input class="form-control" type="text" id="username" name="username" placeholder="Enter username here." />
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="app-password">App password:</label>
+        <input class="form-control" type="password" id="app-password" name="appPassword" placeholder="Enter app password here." />
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="repo-url">Repository Url:</label>
+        <input class="form-control" type="text" id="repo-url" name="repoUrl" placeholder="Enter repository URL here." />
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="branch">Branch name:</label>
+        <select class="form-select" id="branch" name="branch">
+            <option value="default">No branch loaded.</option>
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="versions-path">Path of Versions:</label>
+        <input class="form-control" type="text" id="versions-path" name="versionsPath" placeholder="Enter versions path here.">
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="from-version">From version:</label>
+        <input class="form-control" type="text" id="from-version" name="fromVersion">
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="to-version">To version:</label>
+        <input class="form-control" type="text" id="to-version" name="toVersion">
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label" for="project-name">Project name:</label>
+        <select class="form-select" id="project-name" name="projectName">
+            @foreach (Project project in Model)
+            {
+                <option value="@project.Name">@project.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="d-flex align-content-center justify-content-center">
+        <button class="btn btn-success w-25" type="submit">Submit</button>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const usernameInput = document.getElementById('username');
+        const appPasswordInput = document.getElementById('app-password');
+        const repoUrlInput = document.getElementById('repo-url');
+        const gitServiceInput = document.getElementById('git-online-service');
+        const branchSelect = document.getElementById('branch');
+
+        repoUrlInput.addEventListener('blur', function () {
+            if (repoUrlInput.value) {
+                const dataWithAuth = {
+                    username: usernameInput.value,
+                    appPassword: appPasswordInput.value,
+                    repoUrl: repoUrlInput.value,
+                    gitService: gitServiceInput.value
+                };
+
+                fetch('/Versions/GetBranches', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataWithAuth)
+                })
+                    .then(response => response.json())
+                    .then(branches => {
+                        branchSelect.innerHTML = '';
+
+                        branches.forEach(branch => {
+                            const option = document.createElement('option');
+                            option.value = branch;
+                            option.text = branch;
+                            branchSelect.add(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching branches:', error));
+
+            }
+        });
+    });
+</script>

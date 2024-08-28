@@ -1,0 +1,95 @@
+﻿@model Project
+
+<div class="container">
+    <div class="wrapper">
+        <div class="d-flex align-items-center justify-content-start">
+            <a asp-controller="Operations" asp-action="Add" asp-route-projectID="@Model.ID" class="btn btn-success mb-1">+ New</a>
+        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr class="align-middle text-center">
+                    <th>@nameof(Model.Operations) Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Operations != null)
+                {
+                    @foreach (Operation operation in Model.Operations)
+                    {
+                        <tr class="text-center">
+                            <td>@operation.Name</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-4">
+                                    <a asp-controller="Operations" asp-action="Edit" asp-route-operationID="@operation.ID" class="btn btn-primary">Edit</a>
+                                    <a asp-controller="Operations" asp-action="Delete" asp-route-operationID="@operation.ID" class="btn btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="wrapper">
+        <div class="d-flex align-items-center justify-content-start">
+            <a asp-controller="Applications" asp-action="Add" asp-route-projectID="@Model.ID" class="btn btn-success mb-1">+ New</a>
+        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr class="align-middle text-center">
+                    <th>@nameof(Model.Applications) Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Applications != null)
+                {
+                    @foreach (Application application in Model.Applications)
+                    {
+                        <tr class="text-center">
+                            <td>@application.Name</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-4">
+                                    <a asp-controller="Applications" asp-action="Edit" asp-route-ApplicationID="@application.ID" class="btn btn-primary">Edit</a>
+                                    <a asp-controller="Applications" asp-action="Delete" asp-route-ApplicationID="@application.ID" class="btn btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="wrapper">
+        <div class="d-flex align-items-center justify-content-start">
+            <a asp-controller="DataBases" asp-action="Add" asp-route-projectID="@Model.ID" class="btn btn-success mb-1">+ New</a>
+        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr class="align-middle text-center">
+                    <th>@nameof(Model.DataBases) Name</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.DataBases != null)
+                {
+                    @foreach (DataBase dataBase in Model.DataBases)
+                    {
+                        <tr class="text-center">
+                            <td>@dataBase.Name</td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-4">
+                                    <a asp-controller="DataBases" asp-action="Edit" asp-route-dataBaseID="@dataBase.ID" class="btn btn-primary">Edit</a>
+                                    <a asp-controller="DataBases" asp-action="Delete" asp-route-dataBaseID="@dataBase.ID" class="btn btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

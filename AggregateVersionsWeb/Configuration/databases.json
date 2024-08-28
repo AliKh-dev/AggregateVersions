@@ -1,0 +1,22 @@
+[
+  {
+    "ID": "1040744A-AD62-4DB3-A449-EDE765CECB7D",
+    "Name": "1-Counterparty",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  },
+  {
+    "ID": "83D05B8D-69F6-485F-AA0E-EF447403B6AA",
+    "Name": "2-AccountManagement",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  },
+  {
+    "ID": "D3DE1B89-00C1-410E-AA25-7D17B5E5C40E",
+    "Name": "3-CCS_Oracle_views",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  },
+  {
+    "ID": "400B30D8-3DB4-4E5C-B989-B54489DEEC98",
+    "Name": "4-Common",
+    "ProjectID": "27AF42DE-1923-409D-91E4-3228A02F8F46"
+  }
+]

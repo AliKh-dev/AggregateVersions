@@ -1,0 +1,31 @@
+﻿@model List<Project>
+@{
+    ViewData["Title"] = "Project Page";
+}
+
+<div class="container">
+    <div class="d-flex align-content-center justify-content-start mb-2">
+        <a asp-controller="Projects" asp-action="Add" class="btn btn-success">+ New</a>
+    </div>
+    <table class="table table-striped table-bordered">
+        <thead class="table-success">
+            <tr class="align-middle">
+                <th class="text-center w-50">Project Name</th>
+                <th class="text-center w-50">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Project project in Model)
+            {
+                <tr class="text-center align-middle">
+                    <td>@project.Name</td>
+                    <td class="d-flex align-items-center justify-content-center gap-3">
+                        <a asp-controller="Projects" asp-action="Details" asp-route-projectID="@project.ID" class="btn btn-info ">Details</a>
+                        <a asp-controller="Projects" asp-action="Edit" asp-route-projectID="@project.ID" class="btn btn-primary ">Edit</a>
+                        <a asp-controller="Projects" asp-action="Delete" asp-route-projectID="@project.ID" class="btn btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
