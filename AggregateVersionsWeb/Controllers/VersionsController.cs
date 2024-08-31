@@ -1,5 +1,4 @@
-﻿using AggregateVersions.Domain.Entities;
-using AggregateVersions.Infrastructure.Data;
+﻿using AggregateVersions.Infrastructure.Data;
 using AggregateVersions.Presentation.Models;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
@@ -20,43 +19,41 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            List<Project> projects = _operationContext.Projects.Select(pro => pro).ToList();
+            //List<Project> projects = _operationContext.Projects.Select(pro => pro).ToList();
+            ViewBag.Projects = _operationContext.Projects.Select(pro => pro).ToList();
 
-            return View(projects);
+            ProjectVersionInfo projectVersionInfo = new();
+
+            return View(projectVersionInfo);
         }
 
 
         [Route("[action]")]
         [HttpPost]
-        public IActionResult Index(string gitOnlineService,
-            string? username,
-            string? appPassword,
-            string repoUrl,
-            string branch,
-            string versionsPath,
-            string? fromVersion,
-            string? toVersion,
-            string projectName)
+        public IActionResult Index(ProjectVersionInfo projectVersionInfo)
         {
+            if (projectVersionInfo.RepoUrl == null)
+                return BadRequest("Repository Url is null here.");
+
             string filesPath = CreateFilesDirectoryInProject();
 
-            (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectName);
+            (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName!);
 
-            if (username != null && appPassword != null)
-                CloneRepository(gitOnlineService, repoUrl, clonePath, branch, username, appPassword);
+            if (projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
+                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
             else
-                CloneRepository(gitOnlineService, repoUrl, clonePath, branch);
+                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, clonePath, projectVersionInfo.BranchName!);
 
-            CreateLocalFolder(localPath, projectName);
+            CreateLocalFolder(localPath, projectVersionInfo.ProjectName!);
 
-            CreateDatabaseFolders(localPath, projectName);
+            CreateDatabaseFolders(localPath, projectVersionInfo.ProjectName!);
 
-            CreateApplicationFolders(localPath, projectName);
+            CreateApplicationFolders(localPath, projectVersionInfo.ProjectName!);
 
-            if (fromVersion != null && toVersion != null)
-                ChooseSubFolder(localPath, clonePath, versionsPath, fromVersion, toVersion, projectName);
+            if (projectVersionInfo.FromVersion != null && projectVersionInfo.ToVersion != null)
+                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath!, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion, projectVersionInfo.ProjectName!);
             else
-                ChooseSubFolder(localPath, clonePath, versionsPath, projectName);
+                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath!, projectVersionInfo.ProjectName!);
 
             DataBaseFolderVersion(localPath);
 

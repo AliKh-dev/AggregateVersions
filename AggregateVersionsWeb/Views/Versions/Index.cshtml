@@ -1,58 +1,62 @@
-﻿@model List<Project>
+﻿@model ProjectVersionInfo
 @{
     ViewData["Title"] = "Version Page";
+
+    List<SelectListItem> onlineServices = new()
+    {
+        new() { Value = "github", Text = "Github" },
+        new() { Value = "bitbucket", Text = "Bitbucket" }
+    };
 }
 
 <form asp-controller="Versions" asp-action="Index" method="post">
     <div class="mb-4">
-        <label class="form-label" for="git-online-service">Git online service:</label>
-        <select class="form-select" id="git-online-service" name="gitOnlineService">
-            <option value="github">Github</option>
-            <option value="bitbucket">Bitbucket</option>
+        <label class="form-label" asp-for="GitOnlineService">Git online service:</label>
+        <select class="form-select" asp-for="GitOnlineService" asp-items="@(new SelectList(onlineServices, "Value", "Text"))">
         </select>
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="username">Username:</label>
-        <input class="form-control" type="text" id="username" name="username" placeholder="Enter username here." />
+        <label class="form-label" asp-for="Username">Username:</label>
+        <input class="form-control" type="text" asp-for="Username" placeholder="Enter username here." />
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="app-password">App password:</label>
-        <input class="form-control" type="password" id="app-password" name="appPassword" placeholder="Enter app password here." />
+        <label class="form-label" asp-for="AppPassword">App password:</label>
+        <input class="form-control" type="password" asp-for="AppPassword" placeholder="Enter app password here." />
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="repo-url">Repository Url:</label>
-        <input class="form-control" type="text" id="repo-url" name="repoUrl" placeholder="Enter repository URL here." />
+        <label class="form-label" asp-for="RepoUrl">Repository Url:</label>
+        <input class="form-control" type="text" asp-for="RepoUrl" placeholder="Enter repository URL here." />
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="branch">Branch name:</label>
-        <select class="form-select" id="branch" name="branch">
+        <label class="form-label" asp-for="BranchName">Branch name:</label>
+        <select class="form-select" asp-for="BranchName">
             <option value="default">No branch loaded.</option>
         </select>
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="versions-path">Path of Versions:</label>
-        <input class="form-control" type="text" id="versions-path" name="versionsPath" placeholder="Enter versions path here.">
+        <label class="form-label" asp-for="VersionPath">Path of Versions:</label>
+        <input class="form-control" type="text" asp-for="VersionPath" placeholder="Enter versions path here.">
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="from-version">From version:</label>
-        <input class="form-control" type="text" id="from-version" name="fromVersion">
+        <label class="form-label" asp-for="FromVersion">From version:</label>
+        <input class="form-control" type="text" asp-for="FromVersion">
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="to-version">To version:</label>
-        <input class="form-control" type="text" id="to-version" name="toVersion">
+        <label class="form-label" asp-for="ToVersion">To version:</label>
+        <input class="form-control" type="text" asp-for="ToVersion">
     </div>
 
     <div class="mb-4">
-        <label class="form-label" for="project-name">Project name:</label>
-        <select class="form-select" id="project-name" name="projectName">
-            @foreach (Project project in Model)
+        <label class="form-label" asp-for="ProjectName">Project name:</label>
+        <select class="form-select" asp-for="ProjectName">
+            @foreach (Project project in ViewBag.Projects)
             {
                 <option value="@project.Name">@project.Name</option>
             }
@@ -66,11 +70,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const usernameInput = document.getElementById('username');
-        const appPasswordInput = document.getElementById('app-password');
-        const repoUrlInput = document.getElementById('repo-url');
-        const gitServiceInput = document.getElementById('git-online-service');
-        const branchSelect = document.getElementById('branch');
+        const usernameInput = document.getElementById('Username');
+        const appPasswordInput = document.getElementById('AppPassword');
+        const repoUrlInput = document.getElementById('RepoUrl');
+        const gitServiceInput = document.getElementById('GitOnlineService');
+        const branchSelect = document.getElementById('BranchName');
 
         repoUrlInput.addEventListener('blur', function () {
             if (repoUrlInput.value) {

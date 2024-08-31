@@ -3,7 +3,7 @@
     public class ProjectVersionInfo
     {
         public string? GitOnlineService { get; set; }
-        public string? UserName { get; set; }
+        public string? Username { get; set; }
         public string? AppPassword { get; set; }
         public string? RepoUrl { get; set; }
         public string? BranchName { get; set; }
