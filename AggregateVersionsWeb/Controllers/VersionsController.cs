@@ -115,30 +115,33 @@ namespace AggregateVersions.Presentation.Controllers
 
                 if (applicationFiles.Length > 2)
                 {
-                    List<string> fileNames = [];
+                    List<string> fileExtensions = [];
 
                     foreach (string applicationFile in applicationFiles)
                     {
-                        string fileName = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
+                        string fileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
 
-                        if (!fileNames.Contains(fileName))
-                            fileNames.Add(fileName);
+                        if (!fileExtensions.Contains(fileExtension))
+                            fileExtensions.Add(fileExtension);
                     }
 
-                    foreach (string fileName in fileNames)
+                    foreach (string fileExtension in fileExtensions)
                     {
                         StringBuilder fileContent = new();
+                        string fileName = "";
 
                         foreach (string applicationFile in applicationFiles)
                         {
-                            string appFileName = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
+                            string appFileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
 
-                            if (appFileName == fileName)
+                            fileName = Path.GetFileName(applicationFile)[..Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-')];
+
+                            if (appFileExtension == fileExtension)
                             {
-                                if (fileName.Contains("txt"))
+                                if (fileExtension.Contains("txt"))
                                 {
                                     fileContent.Append(System.IO.File.ReadAllText(applicationFile));
-                                    fileContent.Append("\n******************************************\n");
+                                    fileContent.Append("\n\n**********************************************************\n\n");
                                 }
                                 else
                                 {
@@ -150,14 +153,19 @@ namespace AggregateVersions.Presentation.Controllers
 
                                     fileContent.Append(content);
                                 }
+                                System.IO.File.Delete(applicationFile);
                             }
                         }
 
-                        fileContent.Remove(fileContent.Length - 1, 1);
-                        fileContent.Insert(0, '{');
-                        fileContent.Append('}');
+                        if (!fileExtension.Contains("txt"))
+                        {
+                            fileContent.Remove(fileContent.Length - 1, 1);
+                            fileContent.Insert(0, '{');
+                            fileContent.Append('}');
+                        }
 
-                        using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, "(Merge)" + "-" + fileName));
+
+                        using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(Merge)", "-", fileExtension)));
                         writer.WriteAsync(fileContent);
                     }
                 }
@@ -183,26 +191,40 @@ namespace AggregateVersions.Presentation.Controllers
         {
             string[] dataBaseDirectories = Directory.GetDirectories(Path.Combine(localPath, "DataBases"));
 
+            VersionFolder(dataBaseDirectories);
+
             foreach (string dataBaseDirectory in dataBaseDirectories)
+                VersionFolder(Directory.GetDirectories(dataBaseDirectory));
+        }
+
+        private static void VersionFolder(string[] directories)
+        {
+            foreach (string directory in directories)
             {
-                string[] dataBaseFiles = Directory.GetFiles(dataBaseDirectory);
+                string[] files = Directory.GetFiles(directory);
 
                 List<char> versions = [];
 
-                foreach (string dataBaseFile in dataBaseFiles)
-                    if (Path.GetFileName(dataBaseFile) != null && !versions.Contains(Path.GetFileName(dataBaseFile).First()))
-                        versions.Add(Path.GetFileName(dataBaseFile).First());
+                foreach (string file in files)
+                {
+                    string? fileName = Path.GetFileName(file);
+
+                    if (fileName != null && !versions.Contains(fileName.First()))
+                        versions.Add(fileName.First());
+                }
 
                 if (versions.Count > 1)
                 {
                     foreach (char version in versions)
                     {
-                        Directory.CreateDirectory(Path.Combine(dataBaseDirectory, version.ToString()));
+                        Directory.CreateDirectory(Path.Combine(directory, version.ToString()));
 
-                        foreach (string dataBaseFile in dataBaseFiles)
+                        foreach (string file in files)
                         {
-                            if (Path.GetFileName(dataBaseFile) != null && Path.GetFileName(dataBaseFile).First() == version)
-                                Directory.Move(dataBaseFile, Path.Combine(dataBaseDirectory, version.ToString(), Path.GetFileName(dataBaseFile)));
+                            string? fileName = Path.GetFileName(file);
+
+                            if (fileName != null && fileName.First() == version)
+                                Directory.Move(file, Path.Combine(directory, version.ToString(), fileName));
                         }
                     }
                 }
@@ -521,6 +543,7 @@ namespace AggregateVersions.Presentation.Controllers
                 string databasesDestinationPath = Path.Combine(destPath, GetDatabaseFolderNames(projectName)
                     .FirstOrDefault(databases => databases.Contains(databaseDirectoryName),
                                     databaseDirectoryName + "(Unknown)"));
+
                 if (!Directory.Exists(databasesDestinationPath))
                     Directory.CreateDirectory(databasesDestinationPath);
 
@@ -528,7 +551,17 @@ namespace AggregateVersions.Presentation.Controllers
 
                 foreach (string databaseSubDirectory in databaseSubDirectories)
                 {
-                    string databaseSubDirectoryDestinationPath = Path.Combine(databasesDestinationPath, Path.GetFileName(databaseSubDirectory));
+                    string databaseSubDirectoryDestinationPath;
+
+                    if (databaseSubDirectory.Contains("rollback", StringComparison.CurrentCultureIgnoreCase))
+                        databaseSubDirectoryDestinationPath = Path.Combine(databasesDestinationPath, "Rollback");
+
+                    else
+                    {
+                        string databaseSubDirectoryName = string.Concat(Path.GetFileName(databaseSubDirectory), "(Unknown)");
+                        databaseSubDirectoryDestinationPath = Path.Combine(databasesDestinationPath, databaseSubDirectoryName);
+                    }
+
 
                     if (!Directory.Exists(databaseSubDirectoryDestinationPath))
                         Directory.CreateDirectory(databaseSubDirectoryDestinationPath);

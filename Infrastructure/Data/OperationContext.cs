@@ -1,6 +1,5 @@
 ﻿using AggregateVersions.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace AggregateVersions.Infrastructure.Data
 {
@@ -44,30 +43,30 @@ namespace AggregateVersions.Infrastructure.Data
                         .HasForeignKey(application => application.ProjectID);
 
 
-            string projectsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\projects.json");
+            //string projectsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\projects.json");
 
-            string operationsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\operations.json");
+            //string operationsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\operations.json");
 
-            string applicationsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\applications.json");
+            //string applicationsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\applications.json");
 
-            string dataBasesJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\databases.json");
+            //string dataBasesJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\databases.json");
 
-            List<Project>? projects = JsonSerializer.Deserialize<List<Project>>(projectsJson);
-            List<Operation>? operations = JsonSerializer.Deserialize<List<Operation>>(operationsJson);
-            List<Application>? applications = JsonSerializer.Deserialize<List<Application>>(applicationsJson);
-            List<DataBase>? dataBases = JsonSerializer.Deserialize<List<DataBase>>(dataBasesJson);
+            //List<Project>? projects = JsonSerializer.Deserialize<List<Project>>(projectsJson);
+            //List<Operation>? operations = JsonSerializer.Deserialize<List<Operation>>(operationsJson);
+            //List<Application>? applications = JsonSerializer.Deserialize<List<Application>>(applicationsJson);
+            //List<DataBase>? dataBases = JsonSerializer.Deserialize<List<DataBase>>(dataBasesJson);
 
-            if (projects != null)
-                modelBuilder.Entity<Project>().HasData(projects);
+            //if (projects != null)
+            //    modelBuilder.Entity<Project>().HasData(projects);
 
-            if (operations != null)
-                modelBuilder.Entity<Operation>().HasData(operations);
+            //if (operations != null)
+            //    modelBuilder.Entity<Operation>().HasData(operations);
 
-            if (applications != null)
-                modelBuilder.Entity<Application>().HasData(applications);
+            //if (applications != null)
+            //    modelBuilder.Entity<Application>().HasData(applications);
 
-            if (dataBases != null)
-                modelBuilder.Entity<DataBase>().HasData(dataBases);
+            //if (dataBases != null)
+            //    modelBuilder.Entity<DataBase>().HasData(dataBases);
         }
     }
 }
