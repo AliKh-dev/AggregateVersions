@@ -10,7 +10,7 @@ using System.Text;
 namespace AggregateVersions.Presentation.Controllers
 {
     [Route("[controller]")]
-    public class VersionsController(OperationContext operationContext) : Controller
+    public class VersionsController(OperationContext operationContext, IConfiguration configuration) : Controller
     {
         private readonly OperationContext _operationContext = operationContext;
 
@@ -66,14 +66,36 @@ namespace AggregateVersions.Presentation.Controllers
             return File(fileContent, "application/zip", fileDownloadName: "Operation.zip");
         }
 
+        [Route("[action]")]
+        [HttpPost]
+        public async Task<IActionResult> GetRepositories([FromBody] RepoInfoModel repoInfo)
+        {
+            if (repoInfo.GitService != null)
+            {
+                if (repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (repoInfo.Username != null && repoInfo.AppPassword != null)
+                        return Json(await GetBitbucketRepositories(repoInfo.Username, repoInfo.AppPassword));
+                    else
+                        return Json(await GetBitbucketRepositories());
+                }
+
+                else
+                    throw new InvalidOperationException("repsitories wasn't loaded");
+            }
+
+            else
+                throw new InvalidOperationException("repsitories wasn't loaded");
+        }
+
 
         [Route("[action]")]
         [HttpPost]
         public async Task<IActionResult> GetBranches([FromBody] RepoInfoModel repoInfo)
         {
-            if (repoInfo.RepoUrl != null && repoInfo.GitService != null)
+            if (repoInfo.GitService != null)
             {
-                if (repoInfo.GitService.Equals("github", StringComparison.OrdinalIgnoreCase))
+                if (repoInfo.GitService.Equals("github", StringComparison.OrdinalIgnoreCase) && repoInfo.RepoUrl != null)
                 {
                     if (repoInfo.Username != null && repoInfo.AppPassword != null)
                         return Json(await GetGitHubBranches(repoInfo.RepoUrl, repoInfo.Username, repoInfo.AppPassword));
@@ -81,12 +103,12 @@ namespace AggregateVersions.Presentation.Controllers
                         return Json(await GetGitHubBranches(repoInfo.RepoUrl));
                 }
 
-                else if (repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase))
+                else if (repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase) && repoInfo.RepoName != null)
                 {
                     if (repoInfo.Username != null && repoInfo.AppPassword != null)
-                        return Json(await GetBitbucketBranches(repoInfo.RepoUrl, repoInfo.Username, repoInfo.AppPassword));
+                        return Json(await GetBitbucketBranches(repoInfo.RepoName, repoInfo.Username, repoInfo.AppPassword));
                     else
-                        return Json(await GetBitbucketBranches(repoInfo.RepoUrl));
+                        return Json(await GetBitbucketBranches(repoInfo.RepoName));
                 }
 
                 else
@@ -251,9 +273,10 @@ namespace AggregateVersions.Presentation.Controllers
             return branches.Select(branch => branch["name"]!.ToString()).ToList();
         }
 
-        private async static Task<List<string>> GetBitbucketBranches(string repoUrl, string? username = null, string? appPassword = null)
+        private async Task<List<string>> GetBitbucketBranches(string repoName, string? username = null, string? appPassword = null)
         {
-            string apiUrl = repoUrl.Replace("https://bitbucket.org/", "https://api.bitbucket.org/2.0/repositories/");
+            string apiUrl = configuration["BitbucketUrlBranches"] ?? "";
+            apiUrl = apiUrl.Replace("{0}", repoName);
 
             using HttpClient client = new();
             if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(appPassword))
@@ -262,12 +285,31 @@ namespace AggregateVersions.Presentation.Controllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
             }
 
-            HttpResponseMessage response = await client.GetAsync($"{apiUrl}/refs/branches");
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
             JObject branches = JObject.Parse(responseBody);
 
-            return branches["values"]!.Select(branch => branch["name"]!.ToString()).ToList();
+            return branches["values"]!.Select(branch => branch["displayId"]!.ToString()).ToList();
+        }
+
+        private async Task<List<string>> GetBitbucketRepositories(string? username = null, string? appPassword = null)
+        {
+            string apiUrl = configuration["BitbucketUrlRepositories"] ?? "";
+
+            using HttpClient client = new();
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(appPassword))
+            {
+                var byteArray = new UTF8Encoding().GetBytes($"{username}:{appPassword}");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
+
+            HttpResponseMessage response = await client.GetAsync(apiUrl);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            JObject branches = JObject.Parse(responseBody);
+
+            return branches["values"]!.Select(repository => repository["name"]!.ToString()).ToList();
         }
 
         private static void DeleteRequestDirectory(string filesPath, string requestFolderName)

@@ -31,6 +31,13 @@
         <input class="form-control" type="text" asp-for="RepoUrl" placeholder="Enter repository URL here." />
     </div>
 
+    <div class="mb-4 hidden">
+        <label class="form-label" asp-for="RepoName">Repository Name:</label>
+        <select class="form-select" asp-for="RepoName">
+            <option value="default">No branch loaded.</option>
+        </select>
+    </div>
+
     <div class="mb-4">
         <label class="form-label" asp-for="BranchName">Branch name:</label>
         <select class="form-select" asp-for="BranchName">
@@ -69,43 +76,5 @@
 </form>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const usernameInput = document.getElementById('Username');
-        const appPasswordInput = document.getElementById('AppPassword');
-        const repoUrlInput = document.getElementById('RepoUrl');
-        const gitServiceInput = document.getElementById('GitOnlineService');
-        const branchSelect = document.getElementById('BranchName');
-
-        repoUrlInput.addEventListener('blur', function () {
-            if (repoUrlInput.value) {
-                const dataWithAuth = {
-                    username: usernameInput.value,
-                    appPassword: appPasswordInput.value,
-                    repoUrl: repoUrlInput.value,
-                    gitService: gitServiceInput.value
-                };
-
-                fetch('/Versions/GetBranches', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dataWithAuth)
-                })
-                    .then(response => response.json())
-                    .then(branches => {
-                        branchSelect.innerHTML = '';
-
-                        branches.forEach(branch => {
-                            const option = document.createElement('option');
-                            option.value = branch;
-                            option.text = branch;
-                            branchSelect.add(option);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching branches:', error));
-
-            }
-        });
-    });
+    
 </script>
