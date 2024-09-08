@@ -6,8 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var en = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+en = !string.IsNullOrEmpty(en) ? "Development." : en;
+
 builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
-                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                     .AddJsonFile($"appsettings.{en}json", optional: false, reloadOnChange: true);
 
 builder.Services.AddTransient<IProjectsService, ProjectsService>();
 builder.Services.AddScoped<IProjectsRepository, ProjectsRepository>();
