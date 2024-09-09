@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\AggregateVersions.Domain.csproj" />
-    <ProjectReference Include="..\Infrastructure\AggregateVersions.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

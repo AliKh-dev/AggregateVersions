@@ -1,4 +1,4 @@
-﻿using AggregateVersions.Infrastructure.Data;
+﻿using AggregateVersions.Domain.Interfaces;
 using AggregateVersions.Presentation.Models;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
@@ -10,17 +10,18 @@ using System.Text;
 namespace AggregateVersions.Presentation.Controllers
 {
     [Route("[controller]")]
-    public class VersionsController(OperationContext operationContext, IConfiguration configuration) : Controller
+    public class VersionsController(IProjectsService projectService,
+                                    IOperationsService operationsService,
+                                    IDataBasesService dataBasesService,
+                                    IApplicationsService applicationsService,
+                                    IConfiguration configuration) : Controller
     {
-        private readonly OperationContext _operationContext = operationContext;
-
         [Route("/")]
         [Route("[action]")]
         [HttpGet]
         public IActionResult Index()
         {
-            //List<Project> projects = _operationContext.Projects.Select(pro => pro).ToList();
-            ViewBag.Projects = _operationContext.Projects.Select(pro => pro).ToList();
+            ViewBag.Projects = projectService.GetAll().Result.ToList();
 
             ProjectVersionInfo projectVersionInfo = new();
 
@@ -228,7 +229,7 @@ namespace AggregateVersions.Presentation.Controllers
                 {
                     string? fileName = Path.GetFileName(file);
 
-                    if (fileName != null && !versions.Contains(fileName.First()))
+                    if (fileName != null && char.IsNumber(fileName.First()) && !versions.Contains(fileName.First()))
                         versions.Add(fileName.First());
                 }
 
@@ -352,30 +353,26 @@ namespace AggregateVersions.Presentation.Controllers
 
         private string[] GetLocalFolderNames(string projectName)
         {
-            return _operationContext.Operations
-                                    .Where(op => op.ProjectID == GetProjectIDByName(projectName))
-                                    .Select(op => op.Name)
-                                    .ToArray();
-        }
-
-        private Guid GetProjectIDByName(string projectName)
-        {
-            return _operationContext.Projects.First(pro => pro.Name == projectName).ID;
+            if (projectService.GetByName(projectName).Result == null)
+                return [];
+            else
+                return operationsService.GetByProjectID(projectService.GetByName(projectName).Result!.ID).Result!.Select(op => op.Name).ToArray();
         }
 
         private string[] GetDatabaseFolderNames(string projectName)
         {
-            return _operationContext.DataBases
-                                    .Where(db => db.ProjectID == GetProjectIDByName(projectName))
-                                    .Select(db => db.Name)
-                                    .ToArray();
+            if (projectService.GetByName(projectName).Result == null)
+                return [];
+            else
+                return dataBasesService.GetByProjectID(projectService.GetByName(projectName).Result!.ID).Result!.Select(op => op.Name).ToArray();
         }
 
         private string[] GetApplicationFolderNames(string projectName)
         {
-            return [.. _operationContext.Applications
-                                    .Where(app => app.ProjectID == GetProjectIDByName(projectName))
-                                    .Select(app => app.Name)];
+            if (projectService.GetByName(projectName).Result == null)
+                return [];
+            else
+                return applicationsService.GetByProjectID(projectService.GetByName(projectName).Result!.ID).Result!.Select(op => op.Name).ToArray();
         }
 
         private void CreateLocalFolder(string localPath, string projectName)
@@ -439,7 +436,7 @@ namespace AggregateVersions.Presentation.Controllers
                 foreach (string versionSubDirectory in versionSubDirectories)
                 {
                     bool find = false;
-                    string[] operations = [.. _operationContext.Operations.Select(op => op.Name)];
+                    string[] operations = operationsService.GetAll().Result.Select(op => op.Name).ToArray();
                     foreach (string operation in operations)
                     {
                         if (Path.GetFileName(versionSubDirectory).Contains(operation) && nameof(AggregateApplicationsFolders).Contains(operation))
@@ -493,7 +490,7 @@ namespace AggregateVersions.Presentation.Controllers
                 foreach (string versionSubDirectory in versionSubDirectories)
                 {
                     bool find = false;
-                    string[] operations = [.. _operationContext.Operations.Select(op => op.Name)];
+                    string[] operations = operationsService.GetAll().Result.Select(op => op.Name).ToArray();
                     foreach (string operation in operations)
                     {
                         if (Path.GetFileName(versionSubDirectory).Contains(operation) && nameof(AggregateApplicationsFolders).Contains(operation))
