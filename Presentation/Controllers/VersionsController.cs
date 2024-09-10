@@ -33,7 +33,7 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpPost]
         public IActionResult Index(ProjectVersionInfo projectVersionInfo)
         {
-            if (projectVersionInfo.RepoUrl == null)
+            if (projectVersionInfo.RepoUrl == null && projectVersionInfo.GitOnlineService == "github")
                 return BadRequest("Repository Url is null here.");
 
             string filesPath = CreateFilesDirectoryInProject();
@@ -41,9 +41,9 @@ namespace AggregateVersions.Presentation.Controllers
             (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName!);
 
             if (projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
-                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
             else
-                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, clonePath, projectVersionInfo.BranchName!);
+                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName!);
 
             CreateLocalFolder(localPath, projectVersionInfo.ProjectName!);
 
@@ -184,9 +184,17 @@ namespace AggregateVersions.Presentation.Controllers
                             fileContent.Append('}');
                         }
 
-
-                        using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(Merge)", "-", fileExtension)));
-                        writer.WriteAsync(fileContent);
+                        bool merged = applicationFiles.Where(x => fileExtension == x).Count() > 2;
+                        if (merged)
+                        {
+                            using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(Merge)", "-", fileExtension)));
+                            writer.WriteAsync(fileContent);
+                        }
+                        else
+                        {
+                            using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "-", fileExtension)));
+                            writer.WriteAsync(fileContent);
+                        }
                     }
                 }
             }
@@ -325,9 +333,9 @@ namespace AggregateVersions.Presentation.Controllers
                 Directory.Delete(requestDirectoryPath, true);
         }
 
-        private static string CreateFilesDirectoryInProject()
+        private string CreateFilesDirectoryInProject()
         {
-            string currentDirectory = Directory.GetCurrentDirectory();
+            string currentDirectory = configuration["PathClone"] ?? "";
 
             string filesPath = Path.Combine(currentDirectory, "Files");
 
@@ -682,7 +690,7 @@ namespace AggregateVersions.Presentation.Controllers
             return System.IO.File.ReadAllBytes(zipFilePath);
         }
 
-        private static void CloneRepository(string gitOnlineService, string repoUrl, string clonePath, string branch)
+        private void CloneRepository(string gitOnlineService, string repoUrl, string repoName, string clonePath, string branch)
         {
             switch (gitOnlineService)
             {
@@ -690,14 +698,14 @@ namespace AggregateVersions.Presentation.Controllers
                     GithubCloneRepository(repoUrl, clonePath, branch);
                     break;
                 case "bitbucket":
-                    BitbucketCloneRepository(repoUrl, clonePath, branch);
+                    BitbucketCloneRepository(repoName, clonePath, branch);
                     break;
                 default:
                     break;
             }
         }
 
-        private static void CloneRepository(string gitOnlineService, string repoUrl, string clonePath, string branch, string username, string appPassword)
+        private void CloneRepository(string gitOnlineService, string repoUrl, string repoName, string clonePath, string branch, string username, string appPassword)
         {
             switch (gitOnlineService)
             {
@@ -705,26 +713,32 @@ namespace AggregateVersions.Presentation.Controllers
                     GithubCloneRepository(repoUrl, clonePath, branch, username, appPassword);
                     break;
                 case "bitbucket":
-                    BitbucketCloneRepository(repoUrl, clonePath, branch, username, appPassword);
+                    BitbucketCloneRepository(repoName, clonePath, branch, username, appPassword);
                     break;
                 default:
                     break;
             }
         }
 
-        private static void BitbucketCloneRepository(string repositoryUrl, string clonePath, string branch)
+        private void BitbucketCloneRepository(string repoName, string clonePath, string branch)
         {
+            string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
+            repoUrl = repoUrl.Replace("{0}", repoName);
+
             CloneOptions cloneOptions = new() { BranchName = branch };
 
-            Repository.Clone(repositoryUrl, clonePath, cloneOptions);
+            Repository.Clone(repoUrl, clonePath, cloneOptions);
         }
 
-        private static void BitbucketCloneRepository(string repositoryUrl, string clonePath, string branch, string username, string appPassword)
+        private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
         {
+            string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
+            repoUrl = repoUrl.Replace("{0}", repoName);
+
             CloneOptions cloneOptions = GetCloneOptionsWithCredentials(username, appPassword);
             cloneOptions.BranchName = branch;
 
-            Repository.Clone(repositoryUrl, clonePath, cloneOptions);
+            Repository.Clone(repoUrl, clonePath, cloneOptions);
         }
 
         private static void GithubCloneRepository(string repositoryUrl, string clonePath, string branch)
