@@ -2,6 +2,7 @@
 using AggregateVersions.Presentation.Models;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 using System.Net.Http.Headers;
@@ -764,7 +765,10 @@ namespace AggregateVersions.Presentation.Controllers
                 Username = username,
                 Password = appPassword
             };
-
+            cloneOptions.FetchOptions.CertificateCheck += delegate (Certificate certificate, bool valid, string host)
+            {
+                return true;
+            };
             return cloneOptions;
         }
 
