@@ -726,6 +726,9 @@ namespace AggregateVersions.Presentation.Controllers
             string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
             repoUrl = repoUrl.Replace("{0}", repoName);
 
+            var rep = new Repository(repoUrl);
+            rep.Config.Set("http.sslVerify", "false");
+
             CloneOptions cloneOptions = new() { BranchName = branch };
 
             Repository.Clone(repoUrl, clonePath, cloneOptions);
@@ -735,6 +738,9 @@ namespace AggregateVersions.Presentation.Controllers
         {
             string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
             repoUrl = repoUrl.Replace("{0}", repoName);
+
+            var rep = new Repository(repoUrl);
+            rep.Config.Set("http.sslVerify", "false");
 
             CloneOptions cloneOptions = GetCloneOptionsWithCredentials(username, appPassword);
             cloneOptions.BranchName = branch;
