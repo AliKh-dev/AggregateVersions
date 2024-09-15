@@ -1,0 +1,63 @@
+﻿@model List<Access>
+
+
+@{
+    void RenderAccessChildren(Access parent, List<Access> model)
+    {
+        List<Access> children = model.Where(acc => acc.Parent == parent).ToList();
+    
+        if (children.Any())
+        {
+            <ul>
+                @foreach (var child in children)
+                {
+                    <li id="@child.ID">
+                        @child.Title
+                        @{
+                            RenderAccessChildren(child, model);
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+}
+
+<div id="jstree">
+    <ul>
+        @foreach (var access in Model.Where(x => x.ParentId == 0))
+        {
+            <li id="@access.ID">
+                @access.Title
+                @{
+                    RenderAccessChildren(access, Model);
+                }
+            </li>
+        }
+    </ul>
+</div>
+
+<button>demo button</button>
+@section Scripts
+{
+    <script>
+        $(document).ready(function () {
+            $('#jstree').jstree({
+                "core": {
+                    "themes": {
+                        "icons": false
+                    }
+                },
+                "plugins": ["wholerow", "checkbox"]
+            });
+        $('#jstree').on("changed.jstree", function (e, data) {
+            console.log(data.selected);
+                });
+        $('button').on('click', function () {
+            $('#jstree').jstree(true).select_node('child_node_1');
+        $('#jstree').jstree('select_node', 'child_node_1');
+        $.jstree.reference('#jstree').select_node('child_node_1');
+                    });
+                });
+    </script>
+}

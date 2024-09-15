@@ -9,6 +9,7 @@ namespace AggregateVersions.Infrastructure.Data
         public DbSet<Operation> Operations { get; set; }
         public DbSet<DataBase> DataBases { get; set; }
         public DbSet<Application> Applications { get; set; }
+        public DbSet<Access> Accesses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,7 +26,6 @@ namespace AggregateVersions.Infrastructure.Data
             modelBuilder.Entity<Application>()
                         .HasKey(application => application.ID);
 
-
             // Configure one-to-many relationship
             modelBuilder.Entity<Project>()
                         .HasMany(project => project.Operations)
@@ -41,7 +41,7 @@ namespace AggregateVersions.Infrastructure.Data
                         .HasMany(project => project.Applications)
                         .WithOne(application => application.Project)
                         .HasForeignKey(application => application.ProjectID);
-
+            modelBuilder.Entity<Access>().Ignore(x => x.Parent);
 
             //string projectsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\projects.json");
 

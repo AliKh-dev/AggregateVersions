@@ -2,7 +2,6 @@
 using AggregateVersions.Presentation.Models;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 using System.Net.Http.Headers;
@@ -83,11 +82,11 @@ namespace AggregateVersions.Presentation.Controllers
                 }
 
                 else
-                    throw new InvalidOperationException("repsitories wasn't loaded");
+                    throw new InvalidOperationException("repositories wasn't loaded");
             }
 
             else
-                throw new InvalidOperationException("repsitories wasn't loaded");
+                throw new InvalidOperationException("repositories wasn't loaded");
         }
 
 

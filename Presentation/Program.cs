@@ -24,6 +24,9 @@ builder.Services.AddScoped<IApplicationsRepository, ApplicationsRepository>();
 builder.Services.AddTransient<IDataBasesService, DataBasesService>();
 builder.Services.AddScoped<IDataBasesRepository, DataBasesRepository>();
 
+builder.Services.AddTransient<IAccessesService, AccessesService>();
+builder.Services.AddScoped<IAccessesRepository, AccessesRepository>();
+
 
 builder.Services.AddDbContext<OperationContext>(options =>
 {

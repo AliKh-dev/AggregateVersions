@@ -4,6 +4,7 @@ using AggregateVersions.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(OperationContext))]
-    partial class OperationContextModelSnapshot : ModelSnapshot
+    [Migration("20240909070143_AccessMigration")]
+    partial class AccessMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,12 +27,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Access", b =>
                 {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
-
                     b.Property<long?>("ApplicationId")
                         .HasColumnType("bigint");
 
@@ -47,6 +44,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("Guid")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ID")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsApi")
                         .HasColumnType("bit");
@@ -77,8 +77,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<long>("TypeId")
                         .HasColumnType("bigint");
-
-                    b.HasKey("ID");
 
                     b.ToTable("Accesses");
                 });

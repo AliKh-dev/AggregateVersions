@@ -4,6 +4,7 @@ using AggregateVersions.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(OperationContext))]
-    partial class OperationContextModelSnapshot : ModelSnapshot
+    [Migration("20240909113433_accessid")]
+    partial class accessid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,6 +82,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("ParentId")
+                        .IsUnique()
+                        .HasFilter("[ParentId] IS NOT NULL");
 
                     b.ToTable("Accesses");
                 });
@@ -156,6 +163,15 @@ namespace Infrastructure.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("AggregateVersions.Domain.Entities.Access", b =>
+                {
+                    b.HasOne("AggregateVersions.Domain.Entities.Access", "ParentAccess")
+                        .WithOne()
+                        .HasForeignKey("AggregateVersions.Domain.Entities.Access", "ParentId");
+
+                    b.Navigation("ParentAccess");
                 });
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Application", b =>

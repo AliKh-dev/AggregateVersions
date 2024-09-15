@@ -4,6 +4,7 @@ using AggregateVersions.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(OperationContext))]
-    partial class OperationContextModelSnapshot : ModelSnapshot
+    [Migration("20240909114357_accessid2")]
+    partial class accessid2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,6 +72,9 @@ namespace Infrastructure.Migrations
                     b.Property<long?>("ModifiedBy")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("ParentAccessID")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("ParentId")
                         .HasColumnType("bigint");
 
@@ -79,6 +85,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("ParentAccessID");
 
                     b.ToTable("Accesses");
                 });
@@ -156,6 +164,15 @@ namespace Infrastructure.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("AggregateVersions.Domain.Entities.Access", b =>
+                {
+                    b.HasOne("AggregateVersions.Domain.Entities.Access", "ParentAccess")
+                        .WithMany()
+                        .HasForeignKey("ParentAccessID");
+
+                    b.Navigation("ParentAccess");
                 });
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Application", b =>
