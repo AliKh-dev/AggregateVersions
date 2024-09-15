@@ -42,9 +42,9 @@ namespace AggregateVersions.Presentation.Controllers
             (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName!);
 
             if (projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
-                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl!, projectVersionInfo.RepoName!, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
             else
-                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName!);
+                throw new InvalidOperationException("Username and password is required.");
 
             CreateLocalFolder(localPath, projectVersionInfo.ProjectName!);
 
@@ -691,21 +691,6 @@ namespace AggregateVersions.Presentation.Controllers
             return System.IO.File.ReadAllBytes(zipFilePath);
         }
 
-        private void CloneRepository(string gitOnlineService, string repoUrl, string repoName, string clonePath, string branch)
-        {
-            switch (gitOnlineService)
-            {
-                case "github":
-                    GithubCloneRepository(repoUrl, clonePath, branch);
-                    break;
-                case "bitbucket":
-                    BitbucketCloneRepository(repoName, clonePath, branch);
-                    break;
-                default:
-                    break;
-            }
-        }
-
         private void CloneRepository(string gitOnlineService, string repoUrl, string repoName, string clonePath, string branch, string username, string appPassword)
         {
             switch (gitOnlineService)
@@ -721,15 +706,6 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private void BitbucketCloneRepository(string repoName, string clonePath, string branch)
-        {
-            string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
-            repoUrl = repoUrl.Replace("{0}", repoName);
-
-            string command = $"git clone -b {branch} {repoUrl} {clonePath}";
-
-            RunBashCommand(command);
-        }
 
         private static void RunBashCommand(string command)
         {
@@ -757,16 +733,14 @@ namespace AggregateVersions.Presentation.Controllers
 
         private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
         {
-            string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
-            repoUrl = repoUrl.Replace("{0}", repoName);
+            string repoUrlTemplate = configuration["BitbucketUrlRepository"] ?? "";
+            string repoUrl = repoUrlTemplate.Replace("{0}", repoName);
 
-            var rep = new Repository(repoUrl);
-            rep.Config.Set("http.sslVerify", "false");
+            string authenticatedRepoUrl = $"https://{username}:{appPassword}@{repoUrl}";
 
-            CloneOptions cloneOptions = GetCloneOptionsWithCredentials(username, appPassword);
-            cloneOptions.BranchName = branch;
+            string command = $"git clone -b {branch} {authenticatedRepoUrl} {clonePath}";
 
-            Repository.Clone(repoUrl, clonePath, cloneOptions);
+            RunBashCommand(command);
         }
 
         private static void GithubCloneRepository(string repositoryUrl, string clonePath, string branch)
