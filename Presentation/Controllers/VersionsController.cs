@@ -1,6 +1,5 @@
 ﻿using AggregateVersions.Domain.Interfaces;
 using AggregateVersions.Presentation.Models;
-using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
@@ -34,28 +33,32 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpPost]
         public IActionResult Index(ProjectVersionInfo projectVersionInfo)
         {
-            if (projectVersionInfo.RepoUrl == null && projectVersionInfo.GitOnlineService == "github")
-                return BadRequest("Repository Url is null here.");
+            if (projectVersionInfo.ProjectName == null)
+                throw new InvalidOperationException("Project must be have name.");
 
             string filesPath = CreateFilesDirectoryInProject();
 
-            (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName!);
+            (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName);
 
-            if (projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
-                CloneRepository(projectVersionInfo.GitOnlineService!, projectVersionInfo.RepoUrl!, projectVersionInfo.RepoName!, clonePath, projectVersionInfo.BranchName!, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+            if (projectVersionInfo.GitOnlineService != null && projectVersionInfo.RepoUrl != null &&
+                projectVersionInfo.RepoName != null && projectVersionInfo.BranchName != null &&
+                projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
+            {
+                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+            }
             else
-                throw new InvalidOperationException("Username and password is required.");
+                throw new InvalidOperationException("You must fill all input.");
 
-            CreateLocalFolder(localPath, projectVersionInfo.ProjectName!);
+            CreateLocalFolder(localPath, projectVersionInfo.ProjectName);
 
-            CreateDatabaseFolders(localPath, projectVersionInfo.ProjectName!);
+            CreateDatabaseFolders(localPath, projectVersionInfo.ProjectName);
 
-            CreateApplicationFolders(localPath, projectVersionInfo.ProjectName!);
+            CreateApplicationFolders(localPath, projectVersionInfo.ProjectName);
 
             if (projectVersionInfo.FromVersion != null && projectVersionInfo.ToVersion != null)
-                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath!, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion, projectVersionInfo.ProjectName!);
+                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath ?? "", projectVersionInfo.FromVersion, projectVersionInfo.ToVersion, projectVersionInfo.ProjectName);
             else
-                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath!, projectVersionInfo.ProjectName!);
+                ChooseSubFolder(localPath, clonePath, projectVersionInfo.VersionPath ?? "", projectVersionInfo.ProjectName);
 
             DataBaseFolderVersion(localPath);
 
@@ -72,22 +75,16 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> GetRepositories([FromBody] RepoInfoModel repoInfo)
         {
-            if (repoInfo.GitService != null)
+            if (repoInfo.GitService != null &&
+                repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase))
             {
-                if (repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (repoInfo.Username != null && repoInfo.AppPassword != null)
-                        return Json(await GetBitbucketRepositories(repoInfo.Username, repoInfo.AppPassword));
-                    else
-                        return Json(await GetBitbucketRepositories());
-                }
-
-                else
-                    throw new InvalidOperationException("repositories wasn't loaded");
+                if (repoInfo.Username != null && repoInfo.AppPassword != null)
+                    return Json(await GetBitbucketRepositories(repoInfo.Username, repoInfo.AppPassword));
+                throw new InvalidOperationException("For bitbucket, you must enter username and password");
             }
 
             else
-                throw new InvalidOperationException("repositories wasn't loaded");
+                throw new InvalidOperationException("Repositories wasn't loaded");
         }
 
 
@@ -95,30 +92,19 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> GetBranches([FromBody] RepoInfoModel repoInfo)
         {
-            if (repoInfo.GitService != null)
+            if (repoInfo.GitService != null &&
+                repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase) &&
+                repoInfo.RepoName != null)
             {
-                if (repoInfo.GitService.Equals("github", StringComparison.OrdinalIgnoreCase) && repoInfo.RepoUrl != null)
-                {
-                    if (repoInfo.Username != null && repoInfo.AppPassword != null)
-                        return Json(await GetGitHubBranches(repoInfo.RepoUrl, repoInfo.Username, repoInfo.AppPassword));
-                    else
-                        return Json(await GetGitHubBranches(repoInfo.RepoUrl));
-                }
-
-                else if (repoInfo.GitService.Equals("bitbucket", StringComparison.OrdinalIgnoreCase) && repoInfo.RepoName != null)
-                {
-                    if (repoInfo.Username != null && repoInfo.AppPassword != null)
-                        return Json(await GetBitbucketBranches(repoInfo.RepoName, repoInfo.Username, repoInfo.AppPassword));
-                    else
-                        return Json(await GetBitbucketBranches(repoInfo.RepoName));
-                }
+                if (repoInfo.Username != null && repoInfo.AppPassword != null)
+                    return Json(await GetBitbucketBranches(repoInfo.RepoName, repoInfo.Username, repoInfo.AppPassword));
 
                 else
-                    throw new InvalidOperationException("branch wasn't loaded");
+                    throw new InvalidOperationException("For bitbucket, you must enter username and password");
             }
 
             else
-                throw new InvalidOperationException("branch wasn't loaded");
+                throw new InvalidOperationException("Branches wasn't loaded");
         }
 
 
@@ -260,30 +246,7 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async static Task<List<string>> GetGitHubBranches(string repoUrl, string? username = null, string? appPassword = null)
-        {
-            string apiUrl = repoUrl.Replace("https://github.com/", "https://api.github.com/repos/");
-
-            using HttpClient client = new();
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Mozilla", "5.0"));
-
-            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(appPassword))
-            {
-                var credentials = $"{username}:{appPassword}";
-                var byteArray = Encoding.UTF8.GetBytes(credentials);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-            }
-
-            HttpResponseMessage response = await client.GetAsync($"{apiUrl}/branches");
-            response.EnsureSuccessStatusCode();
-
-            string responseBody = await response.Content.ReadAsStringAsync();
-            JArray branches = JArray.Parse(responseBody);
-
-            return branches.Select(branch => branch["name"]!.ToString()).ToList();
-        }
-
-        private async Task<List<string>> GetBitbucketBranches(string repoName, string? username = null, string? appPassword = null)
+        private async Task<List<string>> GetBitbucketBranches(string repoName, string? username, string? appPassword)
         {
             string apiUrl = configuration["BitbucketUrlBranches"] ?? "";
             apiUrl = apiUrl.Replace("{0}", repoName);
@@ -303,7 +266,7 @@ namespace AggregateVersions.Presentation.Controllers
             return branches["values"]!.Select(branch => branch["displayId"]!.ToString()).ToList();
         }
 
-        private async Task<List<string>> GetBitbucketRepositories(string? username = null, string? appPassword = null)
+        private async Task<List<string>> GetBitbucketRepositories(string? username, string? appPassword)
         {
             string apiUrl = configuration["BitbucketUrlRepositories"] ?? "";
 
@@ -691,13 +654,10 @@ namespace AggregateVersions.Presentation.Controllers
             return System.IO.File.ReadAllBytes(zipFilePath);
         }
 
-        private void CloneRepository(string gitOnlineService, string repoUrl, string repoName, string clonePath, string branch, string username, string appPassword)
+        private void CloneRepository(string gitOnlineService, string repoName, string clonePath, string branch, string username, string appPassword)
         {
             switch (gitOnlineService)
             {
-                case "github":
-                    GithubCloneRepository(repoUrl, clonePath, branch, username, appPassword);
-                    break;
                 case "bitbucket":
                     BitbucketCloneRepository(repoName, clonePath, branch, username, appPassword);
                     break;
@@ -706,12 +666,21 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
+        private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
+        {
+            string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
+            repoUrl = repoUrl.Replace("{0}", repoName);
 
-        private static void RunBashCommand(string command)
+            string command = $"git clone -b {branch} {repoUrl} {clonePath}";
+
+            RunBashCommand(command, GenerateAskPassScript(clonePath, username, appPassword));
+        }
+
+        private static void RunBashCommand(string command, string askpassScriptPath)
         {
             Process process = new();
             process.StartInfo.FileName = "/bin/bash";
-            process.StartInfo.Arguments = $"-c \"{command}\"";
+            process.StartInfo.Arguments = $"-c \"GIT_ASKPASS='{askpassScriptPath}' {command}\"";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
@@ -731,48 +700,20 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
+        private static string GenerateAskPassScript(string clonePath, string username, string appPassword)
         {
-            string repoUrlTemplate = configuration["BitbucketUrlRepository"] ?? "";
-            string repoUrl = repoUrlTemplate.Replace("{0}", repoName);
+            string scriptContent = $"#!/bin/bash\n" +
+                                   $"echo \"{username}\"\n" +
+                                   $"echo \"{appPassword}\"";
 
-            string authenticatedRepoUrl = $"https://{username}:{appPassword}@{repoUrl}";
+            string path = Path.Combine(clonePath, "scripts");
 
-            string command = $"git clone -b {branch} {authenticatedRepoUrl} {clonePath}";
+            System.IO.File.WriteAllText(path, scriptContent);
 
-            RunBashCommand(command);
+            return path;
         }
-
-        private static void GithubCloneRepository(string repositoryUrl, string clonePath, string branch)
-        {
-            CloneOptions cloneOptions = new() { BranchName = branch };
-
-            Repository.Clone(repositoryUrl, clonePath, cloneOptions);
-        }
-
-        private static void GithubCloneRepository(string repositoryUrl, string clonePath, string branch, string username, string appPassword)
-        {
-            CloneOptions cloneOptions = GetCloneOptionsWithCredentials(username, appPassword);
-            cloneOptions.BranchName = branch;
-
-            Repository.Clone(repositoryUrl, clonePath, cloneOptions);
-        }
-
-        private static CloneOptions GetCloneOptionsWithCredentials(string username, string appPassword)
-        {
-            CloneOptions cloneOptions = new();
-            cloneOptions.FetchOptions.CredentialsProvider = (_url, _user, _cre) => new UsernamePasswordCredentials
-            {
-                Username = username,
-                Password = appPassword
-            };
-            cloneOptions.FetchOptions.CertificateCheck += delegate (Certificate certificate, bool valid, string host)
-            {
-                return true;
-            };
-            return cloneOptions;
-        }
-
         #endregion
     }
 }
+
+
