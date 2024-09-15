@@ -3,6 +3,7 @@ using AggregateVersions.Presentation.Models;
 using LibGit2Sharp;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text;
@@ -725,12 +726,33 @@ namespace AggregateVersions.Presentation.Controllers
             string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
             repoUrl = repoUrl.Replace("{0}", repoName);
 
-            var rep = new Repository(repoUrl);
-            rep.Config.Set("http.sslVerify", "false");
+            string command = $"git clone -b {branch} {repoUrl} {clonePath}";
 
-            CloneOptions cloneOptions = new() { BranchName = branch };
+            RunBashCommand(command);
+        }
 
-            Repository.Clone(repoUrl, clonePath, cloneOptions);
+        private static void RunBashCommand(string command)
+        {
+            Process process = new();
+            process.StartInfo.FileName = "/bin/bash";
+            process.StartInfo.Arguments = $"-c \"{command}\"";
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.Start();
+
+            string result = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            Console.WriteLine("Output: " + result);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Console.WriteLine("Error: " + error);
+            }
         }
 
         private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
