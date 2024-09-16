@@ -679,8 +679,8 @@ namespace AggregateVersions.Presentation.Controllers
         private static void RunBashCommand(string command, string askpassScriptPath)
         {
             Process process = new();
-            process.StartInfo.FileName = "/bin/bash";
-            process.StartInfo.Arguments = $"-c \"GIT_ASKPASS='{askpassScriptPath}' {command}\"";
+            process.StartInfo.FileName = "cmd.exe";
+            process.StartInfo.Arguments = $"/c \"GIT_ASKPASS='{askpassScriptPath}' \"{command}\"";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
