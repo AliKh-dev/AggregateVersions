@@ -4,7 +4,7 @@
 
     List<SelectListItem> onlineServices = new()
     {
-        new() { Value = "github", Text = "Github" },
+        // new() { Value = "github", Text = "Github" },
         new() { Value = "bitbucket", Text = "Bitbucket" }
     };
 }
@@ -26,12 +26,12 @@
         <input class="form-control" type="password" asp-for="AppPassword" placeholder="Enter app password here." />
     </div>
 
-    <div class="mb-4">
+@*     <div class="mb-4">
         <label class="form-label" asp-for="RepoUrl">Repository Url:</label>
         <input class="form-control" type="text" asp-for="RepoUrl" placeholder="Enter repository URL here." />
-    </div>
+    </div> *@
 
-    <div class="mb-4 hidden">
+    <div class="mb-4">
         <label class="form-label" asp-for="RepoName">Repository Name:</label>
         <select class="form-select" asp-for="RepoName">
             <option value="default">No Repository loaded.</option>

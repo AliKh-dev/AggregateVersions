@@ -5,7 +5,7 @@
         public string? GitOnlineService { get; set; }
         public string? Username { get; set; }
         public string? AppPassword { get; set; }
-        public string? RepoUrl { get; set; }
+        //public string? RepoUrl { get; set; }
         public string? RepoName { get; set; }
         public string? BranchName { get; set; }
         public string? VersionPath { get; set; }

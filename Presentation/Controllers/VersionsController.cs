@@ -40,7 +40,7 @@ namespace AggregateVersions.Presentation.Controllers
 
             (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName);
 
-            if (projectVersionInfo.GitOnlineService != null && projectVersionInfo.RepoUrl != null &&
+            if (projectVersionInfo.GitOnlineService != null &&
                 projectVersionInfo.RepoName != null && projectVersionInfo.BranchName != null &&
                 projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
             {
