@@ -1,4 +1,4 @@
-﻿using AggregateVersions.Domain.Interfaces;
+using AggregateVersions.Domain.Interfaces;
 using AggregateVersions.Presentation.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -680,19 +680,19 @@ namespace AggregateVersions.Presentation.Controllers
         {
             Process process = new();
             process.StartInfo.FileName = "cmd.exe";
-            process.StartInfo.Arguments = $"/c \"GIT_ASKPASS='{askpassScriptPath}' \"{command}\"";
+            process.StartInfo.Arguments = $"/c set GIT_ASKPASS={askpassScriptPath} && {command}";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
-
+        
             process.Start();
-
+        
             string result = process.StandardOutput.ReadToEnd();
             string error = process.StandardError.ReadToEnd();
-
+        
             process.WaitForExit();
-
+        
             Console.WriteLine("Output: " + result);
             if (!string.IsNullOrEmpty(error))
             {
@@ -702,14 +702,14 @@ namespace AggregateVersions.Presentation.Controllers
 
         private static string GenerateAskPassScript(string clonePath, string username, string appPassword)
         {
-            string scriptContent = $"#!/bin/bash\n" +
-                                   $"echo \"{username}\"\n" +
-                                   $"echo \"{appPassword}\"";
-
-            string path = Path.Combine(clonePath, "scripts");
-
+            string scriptContent = $"@echo off\n" +
+                                   $"echo {username}\n" +
+                                   $"echo {appPassword}";
+        
+            string path = Path.Combine(clonePath, "scripts", "askpass.bat");
+        
             System.IO.File.WriteAllText(path, scriptContent);
-
+        
             return path;
         }
         #endregion
