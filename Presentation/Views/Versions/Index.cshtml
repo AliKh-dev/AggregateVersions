@@ -4,7 +4,6 @@
 
     List<SelectListItem> onlineServices = new()
     {
-        // new() { Value = "github", Text = "Github" },
         new() { Value = "bitbucket", Text = "Bitbucket" }
     };
 }
@@ -26,22 +25,17 @@
         <input class="form-control" type="password" asp-for="AppPassword" placeholder="Enter app password here." />
     </div>
 
-@*     <div class="mb-4">
-        <label class="form-label" asp-for="RepoUrl">Repository Url:</label>
-        <input class="form-control" type="text" asp-for="RepoUrl" placeholder="Enter repository URL here." />
-    </div> *@
-
     <div class="mb-4">
         <label class="form-label" asp-for="RepoName">Repository Name:</label>
         <select class="form-select" asp-for="RepoName">
-            <option value="default">No Repository loaded.</option>
+            <option disabled selected>--- SELECT ---</option>
         </select>
     </div>
 
     <div class="mb-4">
         <label class="form-label" asp-for="BranchName">Branch name:</label>
         <select class="form-select" asp-for="BranchName">
-            <option value="default">No branch loaded.</option>
+            <option disabled selected>--- SELECT ---</option>
         </select>
     </div>
 
@@ -63,6 +57,7 @@
     <div class="mb-4">
         <label class="form-label" asp-for="ProjectName">Project name:</label>
         <select class="form-select" asp-for="ProjectName">
+            <option disabled selected>--- SELECT ---</option>
             @foreach (Project project in ViewBag.Projects)
             {
                 <option value="@project.Name">@project.Name</option>
