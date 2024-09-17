@@ -1,40 +1,7 @@
-﻿@model List<Access>
+﻿@model List<AccessNode>
+@using System.Text.Json;
 
-@{
-    void RenderAccessChildren(Access parent, List<Access> model)
-    {
-        List<Access> children = model.Where(acc => acc.Parent == parent).ToList();
-    
-        if (children.Any())
-        {
-                <ul>
-                    @foreach (var child in children)
-                {
-                        <li id="@child.ID">
-                            @child.Title
-                            @{
-                            RenderAccessChildren(child, model);
-                            }
-                        </li>
-                }
-                </ul>
-        }
-    }
-}
-
-<div id="jstree">
-    <ul>
-        @foreach (var access in Model.Where(x => x.ParentId == 0))
-        {
-            <li id="@access.ID">
-                @access.Title
-                @{
-                    RenderAccessChildren(access, Model);
-                }
-            </li>
-        }
-    </ul>
-</div>
+<div id="jstree"></div>
 
 <button>Button</button>
 
@@ -42,27 +9,72 @@
 @section Scripts
 {
     <script>
-        $(document).ready(function () {
-            $('#jstree').jstree({
-                "core": {
-                    "themes": {
-                        "icons": false
-                    }
-                }, 
-                "checkbox": {
-                    three_state: false,
-                    cascade: "up"
+    $(document).ready(function () {
+        $('#jstree').jstree({
+            "core": {
+                "data": @Html.Raw(JsonSerializer.Serialize(Model)),
+                "themes": {
+                    "icons": false
                 },
-                "plugins": ["checkbox"]
-            });
-            $('#jstree').on("changed.jstree", function (e, data) {
-                console.log(data.selected);
-            });
-            $('button').on('click', function () {
-                $('#jstree').jstree(true).select_node('child_node_1');
-                $('#jstree').jstree('select_node', 'child_node_1');
-                $.jstree.reference('#jstree').select_node('child_node_1');
-            });
+                "check_callback": true
+            },
+            "checkbox": {
+                "three_state": false,
+                "cascade": "up"
+            },
+            "plugins": ["checkbox", "contextmenu"],
+            "contextmenu": {
+                "items": function (node) {
+                    return {
+                        "select_children": {
+                            "label": "Select All Children",
+                            "action": function () {
+                                var nodeData = $('#jstree').jstree(true).get_node(node);
+                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
+
+                                if (childNodes.length) {
+                                    $.each(childNodes, function (index, child) {
+                                        $('#jstree').jstree('select_node', child);
+                                    });
+                                } else {
+                                    alert("No children to select.");
+                                }
+                            }
+                        },
+                        "unselect_children": {
+                            "label": "Unselect All Children",
+                            "action": function () {
+                                var nodeData = $('#jstree').jstree(true).get_node(node);
+                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
+
+                                if (childNodes.length) {
+                                    $.each(childNodes, function (index, child) {
+                                        $('#jstree').jstree('deselect_node', child);
+                                    });
+                                } else {
+                                    alert("No children to unselect.");
+                                }
+                            }
+                        },
+                        "select_children_one_depth": {
+                            "label": "Select All Children (One Depth)",
+                            "action": function () {
+                                var nodeData = $('#jstree').jstree(true).get_node(node);
+                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
+
+                                if (childNodes.length) {
+                                    $.each(childNodes, function (index, child) {
+                                        $('#jstree').jstree('select_node', child);
+                                    });
+                                } else {
+                                    alert("No children to select.");
+                                }
+                            }
+                        }
+                    };
+                }
+            }
         });
-    </script>
+    });
+</script>
 }
