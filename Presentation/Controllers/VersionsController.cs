@@ -2,6 +2,7 @@ using AggregateVersions.Domain.Interfaces;
 using AggregateVersions.Presentation.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
@@ -38,13 +39,13 @@ namespace AggregateVersions.Presentation.Controllers
 
             string filesPath = CreateFilesDirectoryInProject();
 
-            (string localPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName);
+            (string localPath, string clonePath, string scriptPath, string requestFolderName) = CreateEachRequestDirectory(filesPath, projectVersionInfo.ProjectName);
 
             if (projectVersionInfo.GitOnlineService != null &&
                 projectVersionInfo.RepoName != null && projectVersionInfo.BranchName != null &&
                 projectVersionInfo.Username != null && projectVersionInfo.AppPassword != null)
             {
-                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath, projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath, scriptPath, projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
             }
             else
                 throw new InvalidOperationException("You must fill all input.");
@@ -308,7 +309,7 @@ namespace AggregateVersions.Presentation.Controllers
             return filesPath;
         }
 
-        private static (string, string, string) CreateEachRequestDirectory(string filesPath, string projectName)
+        private static (string, string, string, string) CreateEachRequestDirectory(string filesPath, string projectName)
         {
             DateTime dateTime = DateTime.Now;
 
@@ -316,11 +317,13 @@ namespace AggregateVersions.Presentation.Controllers
 
             string creationPath = Path.Combine(filesPath, requestFolderName, "Creation");
             string clonePath = Path.Combine(filesPath, requestFolderName, "Clone");
+            string scriptPath = Path.Combine(filesPath, requestFolderName, "Script");
 
             Directory.CreateDirectory(creationPath);
             Directory.CreateDirectory(clonePath);
+            Directory.CreateDirectory(scriptPath);
 
-            return (creationPath, clonePath, requestFolderName);
+            return (creationPath, clonePath, scriptPath, requestFolderName);
         }
 
         private string[] GetLocalFolderNames(string projectName)
@@ -654,33 +657,35 @@ namespace AggregateVersions.Presentation.Controllers
             return System.IO.File.ReadAllBytes(zipFilePath);
         }
 
-        private void CloneRepository(string gitOnlineService, string repoName, string clonePath, string branch, string username, string appPassword)
+        private void CloneRepository(string gitOnlineService, string repoName, string clonePath, string scriptPath, string branch, string username, string appPassword)
         {
             switch (gitOnlineService)
             {
                 case "bitbucket":
-                    BitbucketCloneRepository(repoName, clonePath, branch, username, appPassword);
+                    BitbucketCloneRepository(repoName, clonePath, scriptPath, branch, username, appPassword);
                     break;
                 default:
                     break;
             }
         }
 
-        private void BitbucketCloneRepository(string repoName, string clonePath, string branch, string username, string appPassword)
+        private void BitbucketCloneRepository(string repoName, string clonePath, string scriptPath, string branch, string username, string appPassword)
         {
             string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
             repoUrl = repoUrl.Replace("{0}", repoName);
+            repoUrl = repoUrl.Replace("{1}", Uri.EscapeDataString(username));
+            repoUrl = repoUrl.Replace("{2}", Uri.EscapeDataString(appPassword));
 
-            string command = $"git clone -b {branch} {repoUrl} {clonePath}";
+            string command = $"git -c http.sslVerify=false clone -b {branch} {repoUrl} {clonePath}";
 
-            RunBashCommand(command, GenerateAskPassScript(clonePath, username, appPassword));
+            RunBashCommand(command, GenerateAskPassScript(scriptPath, username, appPassword));
         }
 
         private static void RunBashCommand(string command, string askpassScriptPath)
         {
             Process process = new();
             process.StartInfo.FileName = "cmd.exe";
-            process.StartInfo.Arguments = $"/c set GIT_ASKPASS={askpassScriptPath} && {command}";
+            process.StartInfo.Arguments = $"/c {command}";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
@@ -700,18 +705,13 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private static string GenerateAskPassScript(string clonePath, string username, string appPassword)
+        private static string GenerateAskPassScript(string scriptPath, string username, string appPassword)
         {
             string scriptContent = $"@echo off\n" +
                                    $"echo {username}\n" +
                                    $"echo {appPassword}";
 
-            string scriptsPath = Path.Combine(clonePath, "scripts");
-
-            if (!Directory.Exists(scriptsPath))
-                Directory.CreateDirectory(scriptsPath);
-
-            string askpassPath = Path.Combine(clonePath, "scripts", "askpass.bat");
+            string askpassPath = Path.Combine(scriptPath, "askpass.bat");
 
             System.IO.File.WriteAllText(askpassPath, scriptContent);
 
