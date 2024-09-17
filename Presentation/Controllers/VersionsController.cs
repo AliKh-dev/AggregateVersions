@@ -685,14 +685,14 @@ namespace AggregateVersions.Presentation.Controllers
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
-        
+
             process.Start();
-        
+
             string result = process.StandardOutput.ReadToEnd();
             string error = process.StandardError.ReadToEnd();
-        
+
             process.WaitForExit();
-        
+
             Console.WriteLine("Output: " + result);
             if (!string.IsNullOrEmpty(error))
             {
@@ -705,12 +705,17 @@ namespace AggregateVersions.Presentation.Controllers
             string scriptContent = $"@echo off\n" +
                                    $"echo {username}\n" +
                                    $"echo {appPassword}";
-        
-            string path = Path.Combine(clonePath, "scripts", "askpass.bat");
-        
-            System.IO.File.WriteAllText(path, scriptContent);
-        
-            return path;
+
+            string scriptsPath = Path.Combine(clonePath, "scripts");
+
+            if (!Directory.Exists(scriptsPath))
+                Directory.CreateDirectory(scriptsPath);
+
+            string askpassPath = Path.Combine(clonePath, "scripts", "askpass.bat");
+
+            System.IO.File.WriteAllText(askpassPath, scriptContent);
+
+            return askpassPath;
         }
         #endregion
     }
