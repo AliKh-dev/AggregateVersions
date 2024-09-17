@@ -1,6 +1,5 @@
 ﻿@model List<Access>
 
-
 @{
     void RenderAccessChildren(Access parent, List<Access> model)
     {
@@ -8,17 +7,17 @@
     
         if (children.Any())
         {
-            <ul>
-                @foreach (var child in children)
+                <ul>
+                    @foreach (var child in children)
                 {
-                    <li id="@child.ID">
-                        @child.Title
-                        @{
+                        <li id="@child.ID">
+                            @child.Title
+                            @{
                             RenderAccessChildren(child, model);
-                        }
-                    </li>
+                            }
+                        </li>
                 }
-            </ul>
+                </ul>
         }
     }
 }
@@ -37,7 +36,9 @@
     </ul>
 </div>
 
-<button>demo button</button>
+<button>Button</button>
+
+
 @section Scripts
 {
     <script>
@@ -47,17 +48,21 @@
                     "themes": {
                         "icons": false
                     }
+                }, 
+                "checkbox": {
+                    three_state: false,
+                    cascade: "up"
                 },
-                "plugins": ["wholerow", "checkbox"]
+                "plugins": ["checkbox"]
             });
-        $('#jstree').on("changed.jstree", function (e, data) {
-            console.log(data.selected);
-                });
-        $('button').on('click', function () {
-            $('#jstree').jstree(true).select_node('child_node_1');
-        $('#jstree').jstree('select_node', 'child_node_1');
-        $.jstree.reference('#jstree').select_node('child_node_1');
-                    });
-                });
+            $('#jstree').on("changed.jstree", function (e, data) {
+                console.log(data.selected);
+            });
+            $('button').on('click', function () {
+                $('#jstree').jstree(true).select_node('child_node_1');
+                $('#jstree').jstree('select_node', 'child_node_1');
+                $.jstree.reference('#jstree').select_node('child_node_1');
+            });
+        });
     </script>
 }
