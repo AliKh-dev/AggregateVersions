@@ -2,6 +2,7 @@ using AggregateVersions.Domain.Interfaces;
 using AggregateVersions.Presentation.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
@@ -672,8 +673,10 @@ namespace AggregateVersions.Presentation.Controllers
         {
             string repoUrl = configuration["BitbucketUrlRepository"] ?? "";
             repoUrl = repoUrl.Replace("{0}", repoName);
+            repoUrl = repoUrl.Replace("{1}", Uri.EscapeDataString(username));
+            repoUrl = repoUrl.Replace("{2}", Uri.EscapeDataString(appPassword));
 
-            string command = $"git clone -b {branch} {repoUrl} {clonePath}";
+            string command = $"git -c http.sslVerify=false clone -b {branch} {repoUrl} {clonePath}";
 
             RunBashCommand(command, GenerateAskPassScript(scriptPath, username, appPassword));
         }
@@ -682,7 +685,7 @@ namespace AggregateVersions.Presentation.Controllers
         {
             Process process = new();
             process.StartInfo.FileName = "cmd.exe";
-            process.StartInfo.Arguments = $"/c set GIT_ASKPASS={askpassScriptPath} && {command}";
+            process.StartInfo.Arguments = $"/c {command}";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
