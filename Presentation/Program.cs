@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 var en = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 en = !string.IsNullOrEmpty(en) ? "Development." : en;
 
+
 builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
                      .AddJsonFile($"appsettings.{en}json", optional: false, reloadOnChange: true);
 

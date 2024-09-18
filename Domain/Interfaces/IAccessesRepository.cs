@@ -6,8 +6,9 @@ namespace AggregateVersions.Domain.Interfaces
     {
         Task<List<Access>> GetAll();
         Task<List<Access>> GetSorted();
+        Task<List<Access>> GetParents(Access? access);
         Task SetParent();
-        Task<Access?> GetByID(Guid accessGuid);
+        Task<Access?> GetByID(long accessID);
         Task<Access?> GetByTitle(string accessTitle);
         Task Insert(Access access);
         void Update(Access access);

@@ -13,6 +13,24 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
             return await context.Accesses.ToListAsync();
         }
 
+        public async Task<List<Access>> GetParents(Access? access)
+        {
+            List<Access> accesses = await GetAll();
+            List<Access> parents = [];
+
+            while (access != null && access.ParentId != null && access.ParentId != 0)
+            {
+                Access? parent = accesses.FirstOrDefault(ac => ac.ID == access.ParentId);
+
+                if (parent != null)
+                    parents.Add(parent);
+
+                access = parent;
+            }
+
+            return parents;
+        }
+
         public async Task SetParent()
         {
             List<Access> accesses = await context.Accesses.ToListAsync();
@@ -28,9 +46,9 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
             return await context.Accesses.AsNoTracking().OrderBy(ac => ac.ParentId).ToListAsync();
         }
 
-        public async Task<Access?> GetByID(Guid accessGuid)
+        public async Task<Access?> GetByID(long accessID)
         {
-            return await context.Accesses.AsNoTracking().FirstOrDefaultAsync(ac => ac.Guid == accessGuid);
+            return await context.Accesses.AsNoTracking().FirstOrDefaultAsync(ac => ac.ID == accessID);
         }
 
         public async Task<Access?> GetByTitle(string accessTitle)

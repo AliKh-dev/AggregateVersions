@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using System.Text.Json.Serialization;
 
 namespace AggregateVersions.Presentation.Models
 {
@@ -11,10 +12,12 @@ namespace AggregateVersions.Presentation.Models
         public string? DisplayName { get; set; }
 
         [JsonPropertyName("children")]
-        public List<AccessNode>? Nodes { get; set; }
+        public List<AccessNode>? Children { get; set; }
+
+        [JsonPropertyName("parents")]
+        public List<AccessNode>? Parents { get; set; }
 
         [JsonIgnore()]
-        public bool Children => Nodes != null && Nodes.Count != 0;
-
+        public bool HaveChild => Children != null && Children.Count != 0;
     }
 }

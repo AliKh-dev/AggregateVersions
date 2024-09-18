@@ -1,16 +1,17 @@
-﻿using AggregateVersions.Domain.Entities;
+﻿using AggregateVersions.Domain.DTO;
 
 namespace AggregateVersions.Domain.Interfaces
 {
     public interface IAccessesService
     {
-        Task<List<Access>> GetAll();
-        Task<List<Access>> GetSorted();
+        Task<List<AccessResponse>> GetAll();
+        Task<List<AccessResponse>> GetSorted();
+        Task<AccessResponse?> GetByTitle(string accessTitle);
+        Task<AccessResponse?> GetByID(long accessID);
+        Task<List<AccessResponse>?> GetParents(AccessRequest? access);
         Task SetParent();
-        Task<Access?> GetByTitle(string accessTitle);
-        Task<Access?> GetByGuid(Guid accessGuid);
-        Task<Guid> Add(Access access);
-        Task<bool> Edit(Guid accessGuid, string accessTitle);
-        Task<bool> Delete(Guid accessGuid);
+        Task<Guid> Add(AccessRequest access);
+        Task<bool> Edit(long accessID, string accessTitle);
+        Task<bool> Delete(long accessID);
     }
 }

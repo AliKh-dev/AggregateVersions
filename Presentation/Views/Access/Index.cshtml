@@ -1,80 +1,122 @@
 ﻿@model List<AccessNode>
-@using System.Text.Json;
 
 <div id="jstree"></div>
 
-<button>Button</button>
-
+<button class="btn btn-primary mt-3" id="exportButton">Export</button>
 
 @section Scripts
-{
+    {
     <script>
-    $(document).ready(function () {
-        $('#jstree').jstree({
-            "core": {
-                "data": @Html.Raw(JsonSerializer.Serialize(Model)),
-                "themes": {
-                    "icons": false
+        $(document).ready(function () {
+            $('#jstree').jstree({
+                "core": {
+                    "data": @Html.Raw(JsonSerializer.Serialize(Model)),
+                    "themes": {
+                        "icons": false
+                    },
+                    "check_callback": true
                 },
-                "check_callback": true
-            },
-            "checkbox": {
-                "three_state": false,
-                "cascade": "up"
-            },
-            "plugins": ["checkbox", "contextmenu"],
-            "contextmenu": {
-                "items": function (node) {
+                "checkbox": {
+                    "three_state": false,
+                    "cascade": "up"
+                },
+                "plugins": ["checkbox", "contextmenu"],
+                "contextmenu": {
+                    "items": function (node) {
+                        return {
+                            "select_children": {
+                                "label": "Select All Children",
+                                "action": function () {
+                                    selectOrUnselectChildren(node, true);
+                                }
+                            },
+                            "unselect_children": {
+                                "label": "Unselect All Children",
+                                "action": function () {
+                                    selectOrUnselectChildren(node, false);
+                                }
+                            },
+                            "select_children_one_depth": {
+                                "label": "Select All Children (One Depth)",
+                                "action": function () {
+                                    selectOrUnselectChildren(node, true, true);
+                                }
+                            }
+                        };
+                    }
+                }
+            });
+
+            $('#exportButton').click(function () {
+                var selectedNodes = $('#jstree').jstree("get_selected", true);
+
+                if (selectedNodes.length === 0) {
+                    alert("No nodes selected for export.");
+                    return;
+                }
+
+                var exportData = selectedNodes.map(function (node) {
                     return {
-                        "select_children": {
-                            "label": "Select All Children",
-                            "action": function () {
-                                var nodeData = $('#jstree').jstree(true).get_node(node);
-                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
-
-                                if (childNodes.length) {
-                                    $.each(childNodes, function (index, child) {
-                                        $('#jstree').jstree('select_node', child);
-                                    });
-                                } else {
-                                    alert("No children to select.");
-                                }
-                            }
-                        },
-                        "unselect_children": {
-                            "label": "Unselect All Children",
-                            "action": function () {
-                                var nodeData = $('#jstree').jstree(true).get_node(node);
-                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
-
-                                if (childNodes.length) {
-                                    $.each(childNodes, function (index, child) {
-                                        $('#jstree').jstree('deselect_node', child);
-                                    });
-                                } else {
-                                    alert("No children to unselect.");
-                                }
-                            }
-                        },
-                        "select_children_one_depth": {
-                            "label": "Select All Children (One Depth)",
-                            "action": function () {
-                                var nodeData = $('#jstree').jstree(true).get_node(node);
-                                var childNodes = $('#jstree').jstree(true).get_node(nodeData).children;
-
-                                if (childNodes.length) {
-                                    $.each(childNodes, function (index, child) {
-                                        $('#jstree').jstree('select_node', child);
-                                    });
-                                } else {
-                                    alert("No children to select.");
-                                }
-                            }
-                        }
+                        id: Number(node.id),
+                        text: node.text
                     };
+                });
+
+                var jsonData = JSON.stringify(exportData);
+
+                fetch('@Url.Action("Export", "Access")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: jsonData
+                })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        var url = window.URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'exported_data.json';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+
+
+            function selectOrUnselectChildren(node, select, oneDepth = false) {
+                var nodeData = $('#jstree').jstree(true).get_node(node);
+                var childNodes = nodeData.children;
+
+                if (childNodes.length) {
+                    $.each(childNodes, function (index, child) {
+                        if (select) {
+                            $('#jstree').jstree('select_node', child);
+                        } else {
+                            $('#jstree').jstree('deselect_node', child);
+                        }
+                        if (oneDepth) return false;
+                    });
+                } else {
+                    alert("No children to select/unselect.");
                 }
             }
+
+            // function sendDataToServer(data) {
+            //     $.ajax({
+            //         url: '@Url.Action("Export", "Access")',
+            //         type: 'POST',
+            //         contentType: 'application/json',
+            //         data: data,
+            //         error: function (xhr, status, error) {
+            //             alert("Error occurred while sending data: " + error);
+            //         }
+            //     });
+            // }
         });
-    });
-</script>
+    </script>
 }
