@@ -21,11 +21,35 @@ namespace AggregateVersions.Domain.DTO
         public bool IsSharedInSubsystems { get; set; } = false;
         public int CommonnessStatus { get; set; } = 0;
         public bool? IsDeleted { get; set; } = false;
+
+        public Access ToAccess()
+        {
+            return new Access()
+            {
+                ID = ID,
+                Guid = Guid,
+                CreationDate = CreationDate,
+                LastModifiedDate = LastModifiedDate,
+                ModifiedBy = ModifiedBy,
+                CreatedBy = CreatedBy,
+                Title = Title,
+                Key = Key,
+                ParentId = ParentId,
+                ApplicationId = ApplicationId,
+                TypeId = TypeId,
+                IsEnable = IsEnable,
+                DisplayCode = DisplayCode,
+                IsApi = IsApi,
+                IsSharedInSubsystems = IsSharedInSubsystems,
+                CommonnessStatus = CommonnessStatus,
+                IsDeleted = IsDeleted
+            };
+        }
     }
 
     public static class AccessExportResponseExtension
     {
-        public static AccessResponse ToAccessExportResponse(this Access access)
+        public static AccessResponse ToAccessResponse(this Access access)
         {
             return new AccessResponse()
             {

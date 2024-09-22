@@ -2,10 +2,14 @@
 
 <div id="jstree"></div>
 
-<button class="btn btn-primary mt-3" id="exportButton">Export</button>
+<div class="d-flex justify-content-start gap-2 align-items-center">
+    <button class="btn btn-secondary mt-3" id="import-button">Import</button>
+    <input type="file" accept=".json" id="json-file-input" class="mt-3" multiple />
+</div>
+<button class="btn btn-primary mt-3" id="export-button">Export</button>
 
 @section Scripts
-    {
+{
     <script>
         $(document).ready(function () {
             $('#jstree').jstree({
@@ -47,7 +51,7 @@
                 }
             });
 
-            $('#exportButton').click(function () {
+            $('#export-button').click(function () {
                 var selectedNodes = $('#jstree').jstree("get_selected", true);
 
                 if (selectedNodes.length === 0) {
@@ -87,6 +91,56 @@
                     });
             });
 
+            $('#import-button').click(function () {
+            var fileInput = document.getElementById('json-file-input');
+            if (!fileInput.files.length) {
+                alert('Please select one or more JSON files to import.');
+                return;
+            }
+
+            let files = Array.from(fileInput.files);
+            let importPromises = [];
+
+            files.forEach(file => {
+                let reader = new FileReader();
+                let importPromise = new Promise((resolve, reject) => {
+                    reader.onload = function (e) {
+                        try {
+                            let fileContent = e.target.result;
+                            let jsonData = JSON.parse(fileContent);
+                            resolve(jsonData);
+                        } catch (err) {
+                            alert('Invalid JSON file: ' + file.name);
+                            reject(err);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+                importPromises.push(importPromise);
+            });
+
+            Promise.all(importPromises)
+                .then(results => {
+                    fetch('@Url.Action("Import", "Access")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(results)
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert('All files imported successfully!');
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred during the import.');
+                        });
+                })
+                .catch(error => {
+                    alert('An error occurred during the import.');
+                });
+        });
 
             function selectOrUnselectChildren(node, select, oneDepth = false) {
                 var nodeData = $('#jstree').jstree(true).get_node(node);
@@ -105,18 +159,6 @@
                     alert("No children to select/unselect.");
                 }
             }
-
-            // function sendDataToServer(data) {
-            //     $.ajax({
-            //         url: '@Url.Action("Export", "Access")',
-            //         type: 'POST',
-            //         contentType: 'application/json',
-            //         data: data,
-            //         error: function (xhr, status, error) {
-            //             alert("Error occurred while sending data: " + error);
-            //         }
-            //     });
-            // }
         });
     </script>
 }

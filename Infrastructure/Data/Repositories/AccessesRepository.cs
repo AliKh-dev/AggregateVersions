@@ -1,6 +1,7 @@
 ﻿using AggregateVersions.Domain.Entities;
 using AggregateVersions.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace AggregateVersions.Infrastructure.Data.Repositories
 {
@@ -56,9 +57,24 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
             return await context.Accesses.AsNoTracking().FirstOrDefaultAsync(ac => ac.Title == accessTitle);
         }
 
-        public async Task Insert(Access access)
+        public async Task Insert(List<Access> accesses)
         {
-            await context.Accesses.AddAsync(access);
+            using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (Access access in accesses)
+                {
+                    await context.Accesses.AddAsync(access);
+                    context.SaveChanges();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine("RollBack!");
+            }
         }
 
         public void Update(Access access)
@@ -88,6 +104,13 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public async Task<bool> HaveBaseKey(string key)
+        {
+            if ((await context.Accesses.FirstOrDefaultAsync(ac => ac.Key == key)) == null)
+                return false;
+            return true;
         }
     }
 }

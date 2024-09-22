@@ -12,7 +12,7 @@ namespace AggregateVersions.Application.Services
 
             List<AccessResponse> accessResponses = [];
 
-            accesses.ForEach(ac => accessResponses.Add(ac.ToAccessExportResponse()));
+            accesses.ForEach(ac => accessResponses.Add(ac.ToAccessResponse()));
 
             return accessResponses;
         }
@@ -24,19 +24,22 @@ namespace AggregateVersions.Application.Services
 
             List<AccessResponse> accessResponses = [];
 
-            sortedAccesses.ForEach(ac => accessResponses.Add(ac.ToAccessExportResponse()));
+            sortedAccesses.ForEach(ac => accessResponses.Add(ac.ToAccessResponse()));
 
             return accessResponses;
         }
 
-        public async Task<AccessResponse?> GetByID(long accessID)
+        public async Task<AccessResponse?> GetByID(long? accessID)
         {
-            Access? access = await repository.GetByID(accessID);
+            if (accessID == null)
+                return null;
+
+            Access? access = await repository.GetByID(accessID.Value);
 
             if (access == null)
                 return null;
 
-            return access.ToAccessExportResponse();
+            return access.ToAccessResponse();
         }
 
         public async Task<AccessResponse?> GetByTitle(string accessTitle)
@@ -46,7 +49,7 @@ namespace AggregateVersions.Application.Services
             if (access == null)
                 return null;
 
-            return access.ToAccessExportResponse();
+            return access.ToAccessResponse();
         }
 
         public async Task<List<AccessResponse>?> GetParents(AccessRequest? access)
@@ -60,7 +63,7 @@ namespace AggregateVersions.Application.Services
 
             List<AccessResponse> parents = [];
 
-            accesses.ForEach(ac => parents.Add(ac.ToAccessExportResponse()));
+            accesses.ForEach(ac => parents.Add(ac.ToAccessResponse()));
 
             return parents;
         }
@@ -70,17 +73,9 @@ namespace AggregateVersions.Application.Services
             await repository.SetParent();
         }
 
-        public async Task<Guid> Add(AccessRequest access)
+        public async Task Add(List<Access> accesses)
         {
-            Guid accessGuid = Guid.NewGuid();
-
-            Access accessEntity = new() { Guid = accessGuid, ID = access.ID, Title = access.Title };
-
-            await repository.Insert(accessEntity);
-
-            await repository.Save();
-
-            return accessGuid;
+            await repository.Insert(accesses);
         }
 
         public async Task<bool> Edit(long accessID, string accessTitle)
@@ -113,5 +108,9 @@ namespace AggregateVersions.Application.Services
             return true;
         }
 
+        public async Task<bool> HaveBaseKey(string key)
+        {
+            return await repository.HaveBaseKey(key);
+        }
     }
 }
