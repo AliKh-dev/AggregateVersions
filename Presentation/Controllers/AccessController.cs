@@ -45,7 +45,12 @@ namespace AggregateVersions.Presentation.Controllers
 
             exportResponse = exportResponse.DistinctBy(res => res.ID).ToList();
 
-            string jsonContent = JsonSerializer.Serialize(exportResponse);
+            JsonSerializerOptions options = new()
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
+            string jsonContent = JsonSerializer.Serialize(exportResponse, options);
 
             byte[] content = Encoding.UTF8.GetBytes(jsonContent);
 
