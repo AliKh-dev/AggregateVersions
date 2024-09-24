@@ -7,8 +7,6 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
 {
     public class AccessesRepository(OperationContext context) : IAccessesRepository
     {
-        private bool _disposed = false;
-
         public async Task<List<Access>> GetAll()
         {
             return await context.Accesses.ToListAsync();
@@ -90,20 +88,6 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
         public async Task Save()
         {
             await context.SaveChangesAsync();
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-                if (disposing)
-                    context.Dispose();
-            _disposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
 
         public async Task<bool> HaveBaseKey(string key)

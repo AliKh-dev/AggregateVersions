@@ -2,7 +2,7 @@
 
 namespace AggregateVersions.Domain.Interfaces
 {
-    public interface IAccessesRepository : IDisposable
+    public interface IAccessesRepository
     {
         Task<List<Access>> GetAll();
         Task<List<Access>> GetSorted();

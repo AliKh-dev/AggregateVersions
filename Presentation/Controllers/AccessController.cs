@@ -68,64 +68,37 @@ namespace AggregateVersions.Presentation.Controllers
 
             accesses = accesses.DistinctBy(ac => ac.Key).ToList();
 
-            List<Access> finalAddingList = [];
             List<Access> accessesList = accesses.Select(ac => ac.ToAccess()).ToList();
-            List<Access> rootParents = accessesList.Where(ac => ac.ParentId == 0).ToList();
+            List<Access> rootParents = accessesList.Where(ac => ac.ParentId == 0 || ac.ParentId == null).ToList();
 
+            List<Access> result = await GetInsertList(accessesList, rootParents);
 
-            while (rootParents.Count > 0)
-            {
-                List<Access> addingList = [];
-                (addingList, rootParents, accessesList) = await GetInsertList(accessesList, rootParents);
-                finalAddingList.AddRange(addingList);
-            }
-
-            await accessesService.Add(finalAddingList);
-            return Json(JsonSerializer.Serialize(finalAddingList));
+            //await accessesService.Add(result);
+            return RedirectToAction(nameof(Index));
         }
 
-        private static List<Access> GetChildren(List<Access> accesses, Access access)
+        private async Task<List<Access>> GetInsertList(List<Access> accesses, List<Access> nodes)
         {
-            List<Access> children = accesses.Where(ac => ac.ParentId == access.ID).ToList();
+            if (nodes.Count == 0)
+                return [];
 
-            if (children.Count == 0)
-                return children;
+            List<Access> insertingNodes = [];
 
-            foreach (Access child in children)
-                children.AddRange(GetChildren(accesses, child));
-
-            return children;
-        }
-
-        private async Task<(List<Access>, List<Access>, List<Access>)> GetInsertList(List<Access> accesses, List<Access> parents)
-        {
-            List<Access> insertedList = [];
-            List<Access> uninsertedParents = [];
-
-            foreach (Access parent in parents)
+            foreach (Access node in nodes)
             {
-                if (parent.Key != null)
-                {
-                    if (!await accessesService.HaveBaseKey(parent.Key))
-                    {
-                        List<Access> children = GetChildren(accesses, parent);
-                        insertedList.Add(parent);
-                        insertedList.AddRange(children);
-                    }
-                    else
-                        uninsertedParents.Add(parent);
-                }
+                if (node.Key != null)
+                    if (!await accessesService.HaveBaseKey(node.Key))
+                        insertingNodes.Add(node);
             }
 
-            foreach (Access access in insertedList)
-                accesses.Remove(access);
+            List<Access> childrenNodes = [];
 
-            List<Access> uninsertedParentsChildren = [];
+            foreach (Access node in nodes)
+                childrenNodes.AddRange(accesses.Where(ac => ac.ParentId == node.ID).ToList());
 
-            foreach (Access parent in uninsertedParents)
-                uninsertedParentsChildren.AddRange(accesses.Where(ac => ac.ParentId == parent.ID).ToList());
+            insertingNodes.AddRange(await GetInsertList(accesses, childrenNodes));
 
-            return (insertedList, uninsertedParentsChildren, accesses);
+            return insertingNodes;
         }
 
         private static List<AccessNode> BuildJsTreeStructure(List<AccessResponse> accessList)
