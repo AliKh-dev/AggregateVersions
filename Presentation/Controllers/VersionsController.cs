@@ -54,8 +54,9 @@ namespace AggregateVersions.Presentation.Controllers
                 return BadRequest("Project name must be provided.");
             #endregion
 
+            string rootPath = CreateFilesDirectoryInProject();
 
-            (string filesPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(CreateFilesDirectoryInProject(), projectVersionInfo.ProjectName);
+            (string filesPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(rootPath, projectVersionInfo.ProjectName);
 
             try
             {
@@ -82,6 +83,7 @@ namespace AggregateVersions.Presentation.Controllers
             }
             catch (Exception e)
             {
+                RemoveRequestDirectory(Path.Combine(rootPath, requestFolderName));
                 return BadRequest(e.Message);
             }
         }
@@ -761,7 +763,11 @@ namespace AggregateVersions.Presentation.Controllers
                 Directory.Delete(requestDirectoryPath, true);
         }
 
-
+        private static void RemoveRequestDirectory(string path)
+        {
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
+        }
 
         private async Task<List<string>> GetBitbucketBranches(string repoName, string? username, string? appPassword)
         {

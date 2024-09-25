@@ -11,6 +11,7 @@ namespace AggregateVersions.Presentation.Controllers
 {
     public class AccessController(IAccessesService accessesService) : Controller
     {
+        private readonly JsonSerializerOptions _serializerOptions = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
         public async Task<IActionResult> Index()
         {
             await accessesService.SetParent();
@@ -23,34 +24,11 @@ namespace AggregateVersions.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> Export([FromBody] List<AccessRequest> exportRequests)
         {
-            List<AccessResponse> exportResponse = [];
-
-            foreach (var exportRequest in exportRequests)
-            {
-                AccessResponse? access = await accessesService.GetByID(exportRequest.ID);
-
-                if (access != null)
-                {
-                    exportResponse.Add(access);
-
-                    List<AccessResponse>? parents = await accessesService.GetParents(exportRequest);
-
-                    if (parents == null)
-                        continue;
-
-                    foreach (AccessResponse parent in parents)
-                        exportResponse.Add(parent);
-                }
-            }
+            List<AccessResponse> exportResponse = await GetParents(exportRequests);
 
             exportResponse = exportResponse.DistinctBy(res => res.ID).ToList();
 
-            JsonSerializerOptions options = new()
-            {
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-
-            string jsonContent = JsonSerializer.Serialize(exportResponse, options);
+            string jsonContent = JsonSerializer.Serialize(exportResponse, _serializerOptions);
 
             byte[] content = Encoding.UTF8.GetBytes(jsonContent);
 
@@ -131,5 +109,28 @@ namespace AggregateVersions.Presentation.Controllers
             return rootNodes;
         }
 
+        private async Task<List<AccessResponse>> GetParents(List<AccessRequest> accessRequests)
+        {
+            List<AccessResponse> accessesWithParents = [];
+
+            foreach (var accessRequest in accessRequests)
+            {
+                AccessResponse? access = await accessesService.GetByID(accessRequest.ID);
+
+                if (access != null)
+                {
+                    accessesWithParents.Add(access);
+
+                    List<AccessResponse>? parents = await accessesService.GetParents(accessRequest);
+
+                    if (parents == null || parents.Count == 0)
+                        continue;
+
+                    foreach (AccessResponse parent in parents)
+                        accessesWithParents.Add(parent);
+                }
+            }
+            return accessesWithParents;
+        }
     }
 }
