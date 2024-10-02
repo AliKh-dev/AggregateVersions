@@ -41,7 +41,7 @@ namespace AggregateVersions.Infrastructure.Data
                         .HasMany(project => project.Applications)
                         .WithOne(application => application.Project)
                         .HasForeignKey(application => application.ProjectID);
-            modelBuilder.Entity<Access>().Ignore(x => x.Parent);
+            modelBuilder.Entity<Access>().Ignore(x => x.Parent).ToTable("COM_ACC_Access");
 
             //string projectsJson = File.ReadAllText("C:\\Users\\Ali\\source\\repos\\VersionsAggregationWeb\\VersionsAggregationWeb\\projects.json");
 
