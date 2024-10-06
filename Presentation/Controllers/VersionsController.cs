@@ -358,8 +358,7 @@ namespace AggregateVersions.Presentation.Controllers
             {
                 string[] operationFolderNames = await GetOperationFolderNames(projectName);
 
-                string startDirectory = Path.Combine(clonePath, versionsPath, fromVersion ?? "");
-                string endDirectory = Path.Combine(clonePath, versionsPath, toVersion ?? "");
+
 
                 Console.WriteLine("All Directory in clone path");
                 foreach (var item in Directory.GetDirectories(clonePath))
@@ -369,9 +368,12 @@ namespace AggregateVersions.Presentation.Controllers
 
                 Console.WriteLine($"Version Path is : {versionsPath}");
 
-                string path = Directory.GetDirectories(clonePath).FirstOrDefault(path => path.Equals(versionsPath, StringComparison.OrdinalIgnoreCase), string.Empty);
+                string path = Directory.GetDirectories(clonePath).FirstOrDefault(path => path.Contains(versionsPath, StringComparison.OrdinalIgnoreCase), string.Empty);
 
                 Console.WriteLine($"path is: {path}");
+
+                string startDirectory = Path.Combine(path, fromVersion ?? "");
+                string endDirectory = Path.Combine(path, toVersion ?? "");
 
                 List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
 
