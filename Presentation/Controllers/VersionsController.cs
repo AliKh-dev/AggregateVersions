@@ -83,7 +83,7 @@ namespace AggregateVersions.Presentation.Controllers
             }
             catch (Exception e)
             {
-                DeleteRequestDirectory(filesPath, requestFolderName);
+                DeleteRequestDirectory(rootPath, requestFolderName);
                 return BadRequest(e.Message);
             }
         }
@@ -759,11 +759,11 @@ namespace AggregateVersions.Presentation.Controllers
             return System.IO.File.ReadAllBytes(zipFilePath);
         }
 
-        private static void DeleteRequestDirectory(string filesPath, string requestFolderName)
+        private static void DeleteRequestDirectory(string rootPath, string requestFolderName)
         {
-            string requestDirectoryPath = Path.Combine(filesPath, requestFolderName);
+            string requestDirectoryPath = Path.Combine(rootPath, requestFolderName);
 
-            foreach (string file in Directory.GetFiles(requestDirectoryPath, "*", SearchOption.AllDirectories))
+            foreach (string file in Directory.EnumerateFiles(requestDirectoryPath, "*", SearchOption.AllDirectories))
                 System.IO.File.SetAttributes(file, FileAttributes.Normal);
 
             if (Directory.Exists(requestDirectoryPath))
