@@ -189,8 +189,10 @@ namespace AggregateVersions.Presentation.Controllers
 
                 RunBashCommand(command);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine($"Error in clone: {e.Message}");
+                Console.WriteLine($"Inner exceptoin in clone: {e.InnerException}");
                 throw;
             }
         }
