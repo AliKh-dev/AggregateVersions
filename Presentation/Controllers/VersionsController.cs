@@ -152,6 +152,10 @@ namespace AggregateVersions.Presentation.Controllers
             if (!Directory.Exists(clonePath))
                 Directory.CreateDirectory(clonePath);
 
+            Console.WriteLine($"Clone path: {clonePath}");
+            Console.WriteLine($"Creation path: {creationPath}");
+            Console.WriteLine($"Request path: {Path.Combine(requestFolderName)}");
+
             return (creationPath, clonePath, requestFolderName);
         }
 
@@ -357,7 +361,17 @@ namespace AggregateVersions.Presentation.Controllers
                 string startDirectory = Path.Combine(clonePath, versionsPath, fromVersion ?? "");
                 string endDirectory = Path.Combine(clonePath, versionsPath, toVersion ?? "");
 
+                Console.WriteLine("All Directory in clone path");
+                foreach (var item in Directory.GetDirectories(clonePath))
+                {
+                    Console.WriteLine($"{item}");
+                }
+
+                Console.WriteLine($"Version Path is : {versionsPath}");
+
                 string path = Directory.GetDirectories(clonePath).FirstOrDefault(path => path.Equals(versionsPath, StringComparison.OrdinalIgnoreCase), string.Empty);
+
+                Console.WriteLine($"path is: {path}");
 
                 List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
 
@@ -412,8 +426,11 @@ namespace AggregateVersions.Presentation.Controllers
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine("In ChooseSubFolder Exception Raised.");
+                Console.WriteLine(e.ToString());
+                Console.WriteLine(e.InnerException);
                 throw;
             }
         }
