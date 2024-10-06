@@ -83,7 +83,7 @@ namespace AggregateVersions.Presentation.Controllers
             }
             catch (Exception e)
             {
-                RemoveRequestDirectory(Path.Combine(rootPath, requestFolderName));
+                DeleteRequestDirectory(filesPath, requestFolderName);
                 return BadRequest(e.Message);
             }
         }
@@ -761,12 +761,6 @@ namespace AggregateVersions.Presentation.Controllers
 
             if (Directory.Exists(requestDirectoryPath))
                 Directory.Delete(requestDirectoryPath, true);
-        }
-
-        private static void RemoveRequestDirectory(string path)
-        {
-            if (Directory.Exists(path))
-                Directory.Delete(path, true);
         }
 
         private async Task<List<string>> GetBitbucketBranches(string repoName, string? username, string? appPassword)
