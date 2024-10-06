@@ -84,7 +84,7 @@ namespace AggregateVersions.Presentation.Controllers
             catch (Exception e)
             {
                 DeleteRequestDirectory(rootPath, requestFolderName);
-                return BadRequest(e.Message);
+                return BadRequest(e.ToString());
             }
         }
 
@@ -129,7 +129,7 @@ namespace AggregateVersions.Presentation.Controllers
         #region Private Methods
         private string CreateFilesDirectoryInProject()
         {
-            string? currentDirectory = Convert.ToString(configuration.GetValue(typeof(string), "PathClone")) ?? "C:\\";
+            string? currentDirectory = configuration["PathClone"] ?? "C:\\";
 
             string filesPath = Path.Combine(currentDirectory, "Files");
 
