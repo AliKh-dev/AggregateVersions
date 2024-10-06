@@ -186,6 +186,9 @@ namespace AggregateVersions.Presentation.Controllers
                 repoUrl = repoUrl.Replace("{2}", Uri.EscapeDataString(appPassword));
 
                 string command = $"git -c http.sslVerify=false clone -b {branch} {repoUrl} {clonePath}";
+                string secondCommand = $"git - c http.sslVerify = false clone --verbose - b {branch} {repoUrl} {clonePath}";
+                string thirdCommand = $"git clone -c http.sslVerify=false --single-branch -b {branch} {repoUrl} {clonePath}";
+                string forthCommand = $"git -c http.sslVerify=false -c http.lowSpeedLimit=0 -c http.lowSpeedTime=999999 -c http.timeout=600 clone -b {branch} {repoUrl} {clonePath}";
 
                 RunBashCommand(command);
             }
