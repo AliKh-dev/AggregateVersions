@@ -223,8 +223,10 @@ namespace AggregateVersions.Presentation.Controllers
                     Console.WriteLine($"Error: {error}");
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine($"Error in run bash: {e.Message}");
+                Console.WriteLine($"Inner exceptoin in run bash: {e.InnerException}");
                 throw;
             }
         }
