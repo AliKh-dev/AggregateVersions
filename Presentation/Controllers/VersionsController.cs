@@ -35,23 +35,23 @@ namespace AggregateVersions.Presentation.Controllers
         public async Task<IActionResult> Index(ProjectVersionInfo projectVersionInfo)
         {
             #region Bad Request
-            //if (string.IsNullOrEmpty(projectVersionInfo.GitOnlineService))
-            //    return BadRequest("Git Online service can't be empty.");
+            if (string.IsNullOrEmpty(projectVersionInfo.GitOnlineService))
+                return BadRequest("Git Online service can't be empty.");
 
-            //else if (string.IsNullOrEmpty(projectVersionInfo.Username))
-            //    return BadRequest("Username can't be empty.");
+            else if (string.IsNullOrEmpty(projectVersionInfo.Username))
+                return BadRequest("Username can't be empty.");
 
-            //else if (string.IsNullOrEmpty(projectVersionInfo.AppPassword))
-            //    return BadRequest("Password can't be empty.");
+            else if (string.IsNullOrEmpty(projectVersionInfo.AppPassword))
+                return BadRequest("Password can't be empty.");
 
-            //else if (string.IsNullOrEmpty(projectVersionInfo.RepoName))
-            //    return BadRequest("Repository name must be provided.");
+            else if (string.IsNullOrEmpty(projectVersionInfo.RepoName))
+                return BadRequest("Repository name must be provided.");
 
-            //else if (string.IsNullOrEmpty(projectVersionInfo.BranchName))
-            //    return BadRequest("Branch name must be provided.");
+            else if (string.IsNullOrEmpty(projectVersionInfo.BranchName))
+                return BadRequest("Branch name must be provided.");
 
-            //else if (projectVersionInfo.ProjectName == null)
-            //    return BadRequest("Project name must be provided.");
+            else if (projectVersionInfo.ProjectName == null)
+                return BadRequest("Project name must be provided.");
             #endregion
 
             string rootPath = CreateFilesDirectoryInProject();
@@ -61,8 +61,8 @@ namespace AggregateVersions.Presentation.Controllers
             try
             {
 
-                //CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
-                //                    projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
+                                    projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
                 await CreateOperationFolder(filesPath, projectVersionInfo.ProjectName);
 
                 await CreateDatabaseFolders(filesPath, projectVersionInfo.ProjectName);
