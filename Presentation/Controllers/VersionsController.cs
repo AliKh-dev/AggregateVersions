@@ -77,7 +77,7 @@ namespace AggregateVersions.Presentation.Controllers
 
                 byte[] fileContent = ZipLocalFolder(filesPath);
 
-                DeleteRequestDirectory(filesPath, requestFolderName);
+                DeleteRequestDirectory(rootPath, requestFolderName);
 
                 return File(fileContent, "application/zip", fileDownloadName: "Operation.zip");
             }
@@ -391,7 +391,7 @@ namespace AggregateVersions.Presentation.Controllers
 
                         foreach (string operation in operations.Select(op => op.Name))
                         {
-                            if (Path.GetFileName(versionSubDirectory).Contains(operation) && nameof(AggregateApplicationsFolders).Contains(operation))
+                            if (operation.Contains(Path.GetFileName(versionSubDirectory), StringComparison.OrdinalIgnoreCase) && nameof(AggregateApplicationsFolders).Contains(operation))
                             {
                                 await AggregateApplicationsFolders(
                                     versionSubDirectory,
@@ -401,7 +401,7 @@ namespace AggregateVersions.Presentation.Controllers
                                 find = true;
                             }
 
-                            else if (Path.GetFileName(versionSubDirectory).Contains(operation) && nameof(AggregateDataBasesFolders).Contains(operation))
+                            else if (operation.Contains(Path.GetFileName(versionSubDirectory), StringComparison.OrdinalIgnoreCase) && nameof(AggregateDataBasesFolders).Contains(operation))
                             {
                                 await AggregateDataBasesFolders(
                                     versionSubDirectory,
@@ -411,7 +411,7 @@ namespace AggregateVersions.Presentation.Controllers
                                 find = true;
                             }
 
-                            else if (Path.GetFileName(versionSubDirectory).Contains(operation) && nameof(AggregateReportsFolders).Contains(operation))
+                            else if (operation.Contains(Path.GetFileName(versionSubDirectory), StringComparison.OrdinalIgnoreCase) && nameof(AggregateReportsFolders).Contains(operation))
                             {
                                 AggregateReportsFolders(
                                     versionSubDirectory,
