@@ -749,12 +749,12 @@ namespace AggregateVersions.Presentation.Controllers
                             if (merged)
                             {
                                 using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(Merge)", "-", fileExtension)));
-                                writer.WriteAsync(fileContent);
+                                writer.Write(fileContent);
                             }
                             else
                             {
                                 using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "-", fileExtension)));
-                                writer.WriteAsync(fileContent);
+                                writer.Write(fileContent);
                             }
                         }
                     }
