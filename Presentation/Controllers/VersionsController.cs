@@ -35,23 +35,23 @@ namespace AggregateVersions.Presentation.Controllers
         public async Task<IActionResult> Index(ProjectVersionInfo projectVersionInfo)
         {
             #region Bad Request
-            if (string.IsNullOrEmpty(projectVersionInfo.GitOnlineService))
-                return BadRequest("Git Online service can't be empty.");
+            //if (string.IsNullOrEmpty(projectVersionInfo.GitOnlineService))
+            //    return BadRequest("Git Online service can't be empty.");
 
-            else if (string.IsNullOrEmpty(projectVersionInfo.Username))
-                return BadRequest("Username can't be empty.");
+            //else if (string.IsNullOrEmpty(projectVersionInfo.Username))
+            //    return BadRequest("Username can't be empty.");
 
-            else if (string.IsNullOrEmpty(projectVersionInfo.AppPassword))
-                return BadRequest("Password can't be empty.");
+            //else if (string.IsNullOrEmpty(projectVersionInfo.AppPassword))
+            //    return BadRequest("Password can't be empty.");
 
-            else if (string.IsNullOrEmpty(projectVersionInfo.RepoName))
-                return BadRequest("Repository name must be provided.");
+            //else if (string.IsNullOrEmpty(projectVersionInfo.RepoName))
+            //    return BadRequest("Repository name must be provided.");
 
-            else if (string.IsNullOrEmpty(projectVersionInfo.BranchName))
-                return BadRequest("Branch name must be provided.");
+            //else if (string.IsNullOrEmpty(projectVersionInfo.BranchName))
+            //    return BadRequest("Branch name must be provided.");
 
-            else if (projectVersionInfo.ProjectName == null)
-                return BadRequest("Project name must be provided.");
+            //else if (projectVersionInfo.ProjectName == null)
+            //    return BadRequest("Project name must be provided.");
             #endregion
 
             string rootPath = CreateFilesDirectoryInProject();
@@ -61,8 +61,8 @@ namespace AggregateVersions.Presentation.Controllers
             try
             {
 
-                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
-                                    projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                //CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
+                //                    projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
                 await CreateOperationFolder(filesPath, projectVersionInfo.ProjectName);
 
                 await CreateDatabaseFolders(filesPath, projectVersionInfo.ProjectName);
@@ -358,19 +358,7 @@ namespace AggregateVersions.Presentation.Controllers
             {
                 string[] operationFolderNames = await GetOperationFolderNames(projectName);
 
-
-
-                Console.WriteLine("All Directory in clone path");
-                foreach (var item in Directory.GetDirectories(clonePath))
-                {
-                    Console.WriteLine($"{item}");
-                }
-
-                Console.WriteLine($"Version Path is : {versionsPath}");
-
                 string path = Directory.GetDirectories(clonePath).FirstOrDefault(path => path.Contains(versionsPath, StringComparison.OrdinalIgnoreCase), string.Empty);
-
-                Console.WriteLine($"path is: {path}");
 
                 string startDirectory = Path.Combine(path, fromVersion ?? "");
                 string endDirectory = Path.Combine(path, toVersion ?? "");
@@ -474,8 +462,8 @@ namespace AggregateVersions.Presentation.Controllers
                 {
 
                     string applicationDestPath = Path.Combine(destPath,
-                                                              applicationFolderNames.FirstOrDefault(app => app.Contains(Path.GetFileName(application)),
-                                                                                                                        Path.GetFileName(application) + "(Unknown)"));
+                                                              applicationFolderNames.FirstOrDefault(app => Path.GetFileName(application).Contains(app,
+                                                                StringComparison.OrdinalIgnoreCase), Path.GetFileName(application) + "(Unknown)"));
 
                     if (!Directory.Exists(applicationDestPath))
                         Directory.CreateDirectory(applicationDestPath);
@@ -521,7 +509,7 @@ namespace AggregateVersions.Presentation.Controllers
                         databaseDirectoryName = databaseName;
 
                     string databasesDestinationPath = Path.Combine(destPath,
-                                                                   databaseFolderNames.FirstOrDefault(databases => databases.Contains(databaseDirectoryName),
+                                                                   databaseFolderNames.FirstOrDefault(db => databaseDirectoryName.Contains(db),
                                                                                                       databaseDirectoryName + "(Unknown)"));
 
                     if (!Directory.Exists(databasesDestinationPath))
@@ -693,69 +681,74 @@ namespace AggregateVersions.Presentation.Controllers
                 {
                     string[] applicationFiles = Directory.GetFiles(applicationDirectory);
 
+                    if (applicationFiles.Length < 2)
+                        continue;
 
-                    if (applicationFiles.Length > 2)
+                    Dictionary<string, int> extensions = [];
+
+                    foreach (string applicationFile in applicationFiles)
                     {
-                        List<string> fileExtensions = [];
+                        string fileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
+
+                        if (!extensions.ContainsKey(fileExtension))
+                            extensions[fileExtension] = 1;
+                        else
+                            extensions[fileExtension]++;
+                    }
+
+                    if (!extensions.Values.Any(value => value >= 2))
+                        continue;
+
+                    foreach (string extension in extensions.Keys)
+                    {
+                        StringBuilder fileContent = new();
+                        string fileName = "";
 
                         foreach (string applicationFile in applicationFiles)
                         {
-                            string fileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
+                            string appFileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
 
-                            if (!fileExtensions.Contains(fileExtension))
-                                fileExtensions.Add(fileExtension);
-                        }
+                            fileName = Path.GetFileName(applicationFile)[..Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-')];
 
-                        foreach (string fileExtension in fileExtensions)
-                        {
-                            StringBuilder fileContent = new();
-                            string fileName = "";
-
-                            foreach (string applicationFile in applicationFiles)
+                            if (appFileExtension == extension)
                             {
-                                string appFileExtension = Path.GetFileName(applicationFile)[(Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-') + 1)..];
-
-                                fileName = Path.GetFileName(applicationFile)[..Path.GetFileNameWithoutExtension(applicationFile).IndexOf('-')];
-
-                                if (appFileExtension == fileExtension)
+                                if (extension.Contains("txt"))
                                 {
-                                    if (fileExtension.Contains("txt"))
-                                    {
-                                        fileContent.Append(System.IO.File.ReadAllText(applicationFile));
-                                        fileContent.Append("\n\n**********************************************************\n\n");
-                                    }
-                                    else
-                                    {
-                                        StringBuilder content = new(System.IO.File.ReadAllText(applicationFile));
+                                    fileContent.Append(System.IO.File.ReadAllText(applicationFile));
+                                    fileContent.Append("\n\n**********************************************************\n\n");
+                                    System.IO.File.Delete(applicationFile);
+                                }
+                                else if (extension.Contains("json"))
+                                {
+                                    StringBuilder content = new(System.IO.File.ReadAllText(applicationFile));
 
-                                        content.Remove(0, 2);
-                                        content.Remove(content.Length - 2, 2);
-                                        content.Append(',');
+                                    content.Remove(0, 2);
+                                    content.Remove(content.Length - 2, 2);
+                                    content.Append(',');
 
-                                        fileContent.Append(content);
-                                    }
+                                    fileContent.Append(content);
                                     System.IO.File.Delete(applicationFile);
                                 }
                             }
+                        }
 
-                            if (!fileExtension.Contains("txt"))
-                            {
-                                fileContent.Remove(fileContent.Length - 1, 1);
-                                fileContent.Insert(0, '{');
-                                fileContent.Append('}');
-                            }
+                        if (extension.Contains("json"))
+                        {
+                            fileContent.Remove(fileContent.Length - 1, 1);
+                            fileContent.Insert(0, '{');
+                            fileContent.Append('}');
+                        }
 
-                            bool merged = applicationFiles.Where(x => fileExtension == x).Count() > 2;
-                            if (merged)
-                            {
-                                using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(Merge)", "-", fileExtension)));
-                                writer.Write(fileContent);
-                            }
-                            else
-                            {
-                                using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "-", fileExtension)));
-                                writer.Write(fileContent);
-                            }
+                        bool merged = extensions[extension] >= 2;
+                        if (merged)
+                        {
+                            using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "(M)", "-", extension)));
+                            writer.Write(fileContent);
+                        }
+                        else
+                        {
+                            using StreamWriter writer = System.IO.File.CreateText(Path.Combine(applicationDirectory, string.Concat(fileName, "-", extension)));
+                            writer.Write(fileContent);
                         }
                     }
                 }
