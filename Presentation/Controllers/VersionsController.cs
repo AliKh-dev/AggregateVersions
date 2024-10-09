@@ -12,9 +12,9 @@ namespace AggregateVersions.Presentation.Controllers
 {
     [Route("[controller]")]
     public class VersionsController(IProjectsService projectService,
-                                    IOperationsService operationsService,
+                                    IOperationsService operationsService, // in not necessarily
                                     IDataBasesService dataBasesService,
-                                    IApplicationsService applicationsService,
+                                    IApplicationsService applicationsService, // in not necessarily
                                     IConfiguration configuration) : Controller
     {
         [Route("/")]
@@ -60,16 +60,19 @@ namespace AggregateVersions.Presentation.Controllers
 
             try
             {
+                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
+                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
 
                 CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
                                     projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
-                await CreateOperationFolder(filesPath, projectVersionInfo.ProjectName);
+
+                CreateOperationFolder(filesPath, operationFolderNames);
 
                 await CreateDatabaseFolders(filesPath, projectVersionInfo.ProjectName);
 
-                await CreateApplicationFolders(filesPath, projectVersionInfo.ProjectName);
+                CreateApplicationFolders(filesPath, applicationFolderNames);
 
-                await ChooseSubFolder(filesPath, clonePath, projectVersionInfo.VersionPath ?? "", projectVersionInfo.ProjectName, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
+                await ChooseSubFolder(filesPath, clonePath, operationFolderNames, applicationFolderNames, projectVersionInfo.VersionPath ?? "", projectVersionInfo.ProjectName, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
 
                 DataBaseFolderVersion(filesPath);
 
@@ -238,32 +241,14 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task CreateOperationFolder(string localPath, string projectName)
+        private static void CreateOperationFolder(string localPath, List<string> operationFolderNames)
         {
             try
             {
-                string[] localFolderSubDirectories = await GetOperationFolderNames(projectName);
+                List<string> localFolderSubDirectories = operationFolderNames;
 
                 foreach (string localFolderSubDirectory in localFolderSubDirectories)
                     Directory.CreateDirectory(Path.Combine(localPath, localFolderSubDirectory));
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        private async Task<string[]> GetOperationFolderNames(string projectName)
-        {
-            try
-            {
-                Project project = await projectService.GetByName(projectName) ??
-                                             throw new NullReferenceException($"Can't {projectName}");
-
-                List<Operation>? operations = await operationsService.GetByProjectID(project.ID) ??
-                                                    throw new NullReferenceException($"Can't find any operation based on {projectName}");
-
-                return operations.Select(op => op.Name).ToArray();
             }
             catch (Exception)
             {
@@ -312,11 +297,11 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task CreateApplicationFolders(string localPath, string projectName)
+        private static void CreateApplicationFolders(string localPath, List<string> applicationFolderNames)
         {
             try
             {
-                string[] applicationsSubDirectories = await GetApplicationFolderNames(projectName);
+                List<string> applicationsSubDirectories = applicationFolderNames;
 
                 foreach (string applicationsSubDirectory in applicationsSubDirectories)
                 {
@@ -334,30 +319,10 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task<string[]> GetApplicationFolderNames(string projectName)
+        private async Task ChooseSubFolder(string localPath, string clonePath, List<string> operationFolderNames, List<string> applicationFolderNames, string versionsPath, string projectName, string? fromVersion, string? toVersion)
         {
             try
             {
-                Project project = await projectService.GetByName(projectName) ??
-                                                throw new NullReferenceException($"Can't {projectName}");
-
-                List<Domain.Entities.Application>? applications = await applicationsService.GetByProjectID(project.ID) ??
-                                                                        throw new NullReferenceException($"Can't find any application based on {projectName}");
-
-                return applications.Select(op => op.Name).ToArray();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        private async Task ChooseSubFolder(string localPath, string clonePath, string versionsPath, string projectName, string? fromVersion, string? toVersion)
-        {
-            try
-            {
-                string[] operationFolderNames = await GetOperationFolderNames(projectName);
-
                 string path = Directory.GetDirectories(clonePath).FirstOrDefault(path => path.Contains(versionsPath, StringComparison.OrdinalIgnoreCase), string.Empty);
 
                 string startDirectory = Path.Combine(path, fromVersion ?? "");
@@ -375,16 +340,16 @@ namespace AggregateVersions.Presentation.Controllers
                     foreach (string versionSubDirectory in versionSubDirectories)
                     {
                         bool find = false;
-                        List<Operation> operations = await operationsService.GetAll();
 
-                        foreach (string operation in operations.Select(op => op.Name))
+                        foreach (string operation in operationFolderNames)
                         {
                             if (operation.Contains(Path.GetFileName(versionSubDirectory), StringComparison.OrdinalIgnoreCase) && nameof(AggregateApplicationsFolders).Contains(operation))
                             {
-                                await AggregateApplicationsFolders(
+                                AggregateApplicationsFolders(
                                     versionSubDirectory,
                                     Path.Combine(localPath,
                                                  operationFolderNames.First(tmp => tmp == operation)),
+                                                 applicationFolderNames,
                                                  projectName);
                                 find = true;
                             }
@@ -450,13 +415,11 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task AggregateApplicationsFolders(string srcPath, string destPath, string projectName)
+        private static void AggregateApplicationsFolders(string srcPath, string destPath, List<string> applicationFolderNames, string projectName)
         {
             try
             {
                 string[] applications = Directory.GetDirectories(srcPath);
-
-                string[] applicationFolderNames = await GetApplicationFolderNames(projectName);
 
                 foreach (string application in applications)
                 {
@@ -509,7 +472,8 @@ namespace AggregateVersions.Presentation.Controllers
                         databaseDirectoryName = databaseName;
 
                     string databasesDestinationPath = Path.Combine(destPath,
-                                                                   databaseFolderNames.FirstOrDefault(db => databaseDirectoryName.Contains(db),
+                                                                   databaseFolderNames.FirstOrDefault(db => db.Contains(databaseDirectoryName) ||
+                                                                                                            databaseDirectoryName.Contains(db),
                                                                                                       databaseDirectoryName + "(Unknown)"));
 
                     if (!Directory.Exists(databasesDestinationPath))
@@ -821,6 +785,79 @@ namespace AggregateVersions.Presentation.Controllers
             return branches["values"]!.Select(repository => repository["name"]!.ToString()).ToList();
         }
         #endregion
+
+        private List<string> GetOperationFolderNames(string path)
+        {
+            string[] folders = Directory.GetDirectories(path);
+            List<string> operations = [];
+
+            foreach (string folder in folders)
+                operations.AddRange(Directory.GetDirectories(folder));
+
+            operations = operations.DistinctBy(op => Path.GetFileName(op)).ToList();
+
+            FolderNameConfig folderNameConfig = new();
+            configuration.GetSection("Operations").Bind(folderNameConfig.FolderNames);
+
+            operations = ClassifyFolderNames(operations, folderNameConfig).Values.Distinct().ToList();
+
+            return operations;
+        }
+
+        private static Dictionary<string, string> ClassifyFolderNames(List<string> folderNames, FolderNameConfig folderNameConfig)
+        {
+            Dictionary<string, string> classifiedNames = [];
+
+            foreach (string folder in folderNames)
+            {
+                string? matchedCategory = GetSimilarFolderName(folder, folderNameConfig);
+
+                if (string.IsNullOrEmpty(matchedCategory))
+                    matchedCategory = "Unknown";
+
+                classifiedNames[folder] = matchedCategory;
+            }
+
+            return classifiedNames;
+        }
+
+        private static string? GetSimilarFolderName(string folderName, FolderNameConfig folderNameConfig, string? category = null)
+        {
+            if (category == null)
+                return folderNameConfig.FolderNames
+                                       .FirstOrDefault(op => op.Value.Any(alias => folderName.Contains(alias, StringComparison.OrdinalIgnoreCase)))
+                                       .Key;
+
+            else if (!folderNameConfig.FolderNames.ContainsKey(category))
+                return null;
+
+            return folderNameConfig.FolderNames[category]
+                                   .FirstOrDefault(alias => folderName.Contains(alias, StringComparison.OrdinalIgnoreCase)) != null
+                                   ? category : null;
+        }
+
+        private List<string> GetApplicationFolderNames(string path)
+        {
+            string[] folders = Directory.GetDirectories(path); // list of versions
+            List<string> applications = [];
+
+            FolderNameConfig folderNameConfig = new();
+            configuration.GetSection("Operations").Bind(folderNameConfig.FolderNames);
+
+            foreach (string folder in folders) // each of version
+            {
+                List<string> applicationFolders = Directory.GetDirectories(folder)
+                            .Where(dir => GetSimilarFolderName(Path.GetFileName(dir), folderNameConfig, "Applications") == "Applications").ToList();
+
+                foreach (string applicationFolder in applicationFolders)
+                    applications.AddRange(Directory.GetDirectories(applicationFolder));
+            }
+
+            applications = applications.Select(app => Path.GetFileName(app)).Distinct().ToList();
+
+            return applications;
+        }
+
     }
 }
 
