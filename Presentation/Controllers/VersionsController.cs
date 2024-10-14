@@ -12,9 +12,7 @@ namespace AggregateVersions.Presentation.Controllers
 {
     [Route("[controller]")]
     public class VersionsController(IProjectsService projectService,
-                                    IOperationsService operationsService, // in not necessarily
                                     IDataBasesService dataBasesService,
-                                    IApplicationsService applicationsService, // in not necessarily
                                     IConfiguration configuration) : Controller
     {
         [Route("/")]

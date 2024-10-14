@@ -16,12 +16,6 @@ builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
 builder.Services.AddTransient<IProjectsService, ProjectsService>();
 builder.Services.AddScoped<IProjectsRepository, ProjectsRepository>();
 
-builder.Services.AddTransient<IOperationsService, OperationsServices>();
-builder.Services.AddScoped<IOperationsRepository, OperationsRepository>();
-
-builder.Services.AddTransient<IApplicationsService, ApplicationsService>();
-builder.Services.AddScoped<IApplicationsRepository, ApplicationsRepository>();
-
 builder.Services.AddTransient<IDataBasesService, DataBasesService>();
 builder.Services.AddScoped<IDataBasesRepository, DataBasesRepository>();
 
@@ -42,7 +36,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

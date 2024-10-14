@@ -6,8 +6,6 @@ namespace AggregateVersions.Presentation.Controllers
 {
     [Route("[controller]")]
     public class ProjectsController(IProjectsService projectsService,
-                                    IOperationsService operationsService,
-                                    IApplicationsService applicationsService,
                                     IDataBasesService dataBasesService) : Controller
     {
         [HttpGet]
@@ -73,13 +71,7 @@ namespace AggregateVersions.Presentation.Controllers
             Project? project = await projectsService.GetByID(projectID);
 
             if (project != null)
-            {
-                project.Operations = await operationsService.GetByProjectID(projectID);
-
-                project.Applications = await applicationsService.GetByProjectID(projectID);
-
                 project.DataBases = await dataBasesService.GetByProjectID(projectID);
-            }
 
             return View(project);
         }

@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace AggregateVersions.Infrastructure.Migrations
 {
     [DbContext(typeof(OperationContext))]
-    [Migration("20240909123228_RenameParent")]
-    partial class RenameParent
+    [Migration("20241014064140_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,12 +27,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Access", b =>
                 {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"));
-
                     b.Property<long?>("ApplicationId")
                         .HasColumnType("bigint");
 
@@ -50,6 +44,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("Guid")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ID")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsApi")
                         .HasColumnType("bit");
@@ -81,29 +78,7 @@ namespace Infrastructure.Migrations
                     b.Property<long>("TypeId")
                         .HasColumnType("bigint");
 
-                    b.HasKey("ID");
-
-                    b.ToTable("Accesses");
-                });
-
-            modelBuilder.Entity("AggregateVersions.Domain.Entities.Application", b =>
-                {
-                    b.Property<Guid>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ProjectID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("ProjectID");
-
-                    b.ToTable("Applications");
+                    b.ToTable("COM_ACC_Access", (string)null);
                 });
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.DataBase", b =>
@@ -126,26 +101,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("DataBases");
                 });
 
-            modelBuilder.Entity("AggregateVersions.Domain.Entities.Operation", b =>
-                {
-                    b.Property<Guid>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ProjectID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("ProjectID");
-
-                    b.ToTable("Operations");
-                });
-
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("ID")
@@ -161,17 +116,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("AggregateVersions.Domain.Entities.Application", b =>
-                {
-                    b.HasOne("AggregateVersions.Domain.Entities.Project", "Project")
-                        .WithMany("Applications")
-                        .HasForeignKey("ProjectID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
             modelBuilder.Entity("AggregateVersions.Domain.Entities.DataBase", b =>
                 {
                     b.HasOne("AggregateVersions.Domain.Entities.Project", "Project")
@@ -183,24 +127,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("AggregateVersions.Domain.Entities.Operation", b =>
-                {
-                    b.HasOne("AggregateVersions.Domain.Entities.Project", "Project")
-                        .WithMany("Operations")
-                        .HasForeignKey("ProjectID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Project", b =>
                 {
-                    b.Navigation("Applications");
-
                     b.Navigation("DataBases");
-
-                    b.Navigation("Operations");
                 });
 #pragma warning restore 612, 618
         }
