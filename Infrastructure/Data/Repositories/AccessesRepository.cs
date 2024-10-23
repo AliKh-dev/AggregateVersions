@@ -60,11 +60,8 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
             using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                foreach (Access access in accesses)
-                {
-                    await context.Accesses.AddAsync(access);
-                    context.SaveChanges();
-                }
+                context.AddRange(accesses);
+                await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
             }
@@ -96,5 +93,15 @@ namespace AggregateVersions.Infrastructure.Data.Repositories
                 return false;
             return true;
         }
+        public List<Access> GetNonExistentAccesses(List<Access> accesses)
+        {
+            HashSet<string> existingKeys = new(context.Accesses.Select(temp => temp.Key ?? ""));
+
+            List<Access> nonExistentAccesses = accesses.Where(access => !existingKeys.Contains(access.Key ?? ""))
+                                                       .ToList();
+
+            return nonExistentAccesses;
+        }
+
     }
 }

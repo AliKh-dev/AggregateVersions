@@ -11,6 +11,7 @@ namespace AggregateVersions.Domain.Interfaces
         Task<Access?> GetByID(long accessID);
         Task<Access?> GetByTitle(string accessTitle);
         Task<bool> HaveBaseKey(string key);
+        public List<Access> GetNonExistentAccesses(List<Access> accesses);
         Task Insert(List<Access> accesses);
         void Update(Access access);
         void Delete(Access access);

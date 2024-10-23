@@ -112,5 +112,10 @@ namespace AggregateVersions.Application.Services
         {
             return await repository.HaveBaseKey(key);
         }
+
+        public List<Access> GetNonExistentAccesses(List<Access> accesses)
+        {
+            return repository.GetNonExistentAccesses(accesses);
+        }
     }
 }
