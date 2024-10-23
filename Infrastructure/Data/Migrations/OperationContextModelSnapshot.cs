@@ -95,7 +95,7 @@ namespace AggregateVersions.Infrastructure.Migrations
 
                     b.HasIndex("ProjectID");
 
-                    b.ToTable("DataBases");
+                    b.ToTable("DataBases", (string)null);
                 });
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.Project", b =>
@@ -110,7 +110,7 @@ namespace AggregateVersions.Infrastructure.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", (string)null);
                 });
 
             modelBuilder.Entity("AggregateVersions.Domain.Entities.DataBase", b =>

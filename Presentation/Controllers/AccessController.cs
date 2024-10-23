@@ -50,20 +50,20 @@ namespace AggregateVersions.Presentation.Controllers
 
             List<Access> result = GetInsertList(accessesList, rootParents);
 
-            result = GetAddList(result);
+            result = await GetAddList(result);
 
             await accessesService.Add(result);
             return RedirectToAction(nameof(Index));
         }
 
-        private List<Access> GetAddList(List<Access> accesses)
+        private async Task<List<Access>> GetAddList(List<Access> accesses)
         {
             Random rand = new();
 
             List<Access> insertableAccesses = [];
             Dictionary<long, long> parentIdAndId = [];
 
-            long randomID;
+            long incrementalID = (await accessesService.GetAll()).Max(temp => temp.ID);
 
             while (accesses.Count != 0)
             {
@@ -74,12 +74,12 @@ namespace AggregateVersions.Presentation.Controllers
                         matchingAccess.ParentId = parentIdAndId[matchingAccess.ParentId ?? 0];
 
 
-                randomID = rand.NextInt64();
+                incrementalID++;
 
                 if (!parentIdAndId.ContainsKey(matchingAccess.ID))
-                    parentIdAndId[matchingAccess.ID] = randomID;
+                    parentIdAndId[matchingAccess.ID] = incrementalID;
 
-                matchingAccess.ID = randomID;
+                matchingAccess.ID = incrementalID;
 
                 insertableAccesses.Add(matchingAccess);
                 accesses.RemoveAt(0);

@@ -27,7 +27,7 @@ namespace AggregateVersions.Infrastructure.Data
                         .HasForeignKey(dataBase => dataBase.ProjectID);
 
             modelBuilder.Entity<Access>().Ignore(x => x.Parent).ToTable("COM_ACC_Access");
-            modelBuilder.Entity<Access>().HasNoKey();
+            modelBuilder.Entity<Access>().HasKey(ac => ac.ID);
         }
     }
 }

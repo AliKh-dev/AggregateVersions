@@ -61,8 +61,8 @@ namespace AggregateVersions.Presentation.Controllers
                 CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
                                     projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
 
-                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
-                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
+                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""), projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
+                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""), projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
 
                 CreateOperationFolder(filesPath, operationFolderNames);
 
@@ -470,8 +470,8 @@ namespace AggregateVersions.Presentation.Controllers
                         databaseDirectoryName = databaseName;
 
                     string databasesDestinationPath = Path.Combine(destPath,
-                                                                   databaseFolderNames.FirstOrDefault(db => db.Contains(databaseDirectoryName) ||
-                                                                                                            databaseDirectoryName.Contains(db),
+                                                                   databaseFolderNames.FirstOrDefault(db => db.Contains(databaseDirectoryName, StringComparison.OrdinalIgnoreCase) ||
+                                                                                                            databaseDirectoryName.Contains(db, StringComparison.OrdinalIgnoreCase),
                                                                                                       databaseDirectoryName + "(Unknown)"));
 
                     if (!Directory.Exists(databasesDestinationPath))
@@ -784,9 +784,15 @@ namespace AggregateVersions.Presentation.Controllers
         }
         #endregion
 
-        private List<string> GetOperationFolderNames(string path)
+        private List<string> GetOperationFolderNames(string path, string? fromVersion, string? toVersion)
         {
-            string[] folders = Directory.GetDirectories(path);
+            string startDirectory = Path.Combine(path, fromVersion ?? "");
+            string endDirectory = Path.Combine(path, toVersion ?? "");
+
+            List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
+
+            List<string> folders = GetDirectoriesInRange(orderedDirectories, startDirectory, endDirectory);
+
             List<string> operations = [];
 
             foreach (string folder in folders)
@@ -834,9 +840,15 @@ namespace AggregateVersions.Presentation.Controllers
                                    ? category : null;
         }
 
-        private List<string> GetApplicationFolderNames(string path)
+        private List<string> GetApplicationFolderNames(string path, string? fromVersion, string? toVersion)
         {
-            string[] folders = Directory.GetDirectories(path); // list of versions
+            string startDirectory = Path.Combine(path, fromVersion ?? "");
+            string endDirectory = Path.Combine(path, toVersion ?? "");
+
+            List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
+
+            List<string> folders = GetDirectoriesInRange(orderedDirectories, startDirectory, endDirectory);
+
             List<string> applications = [];
 
             FolderNameConfig folderNameConfig = new();
