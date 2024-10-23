@@ -51,18 +51,18 @@ namespace AggregateVersions.Presentation.Controllers
 
             List<Access> result = await GetInsertList(accessesList, rootParents);
 
-            //await accessesService.Add(result);
+            await accessesService.Add(result);
             return RedirectToAction(nameof(Index));
         }
 
-        private async Task<List<Access>> GetInsertList(List<Access> accesses, List<Access> nodes)
+        private async Task<List<Access>> GetInsertList(List<Access> accesses, List<Access> rootParents)
         {
-            if (nodes.Count == 0)
+            if (rootParents.Count == 0)
                 return [];
 
             List<Access> insertingNodes = [];
 
-            foreach (Access node in nodes)
+            foreach (Access node in rootParents)
             {
                 if (node.Key != null)
                     if (!await accessesService.HaveBaseKey(node.Key))
@@ -71,7 +71,7 @@ namespace AggregateVersions.Presentation.Controllers
 
             List<Access> childrenNodes = [];
 
-            foreach (Access node in nodes)
+            foreach (Access node in rootParents)
                 childrenNodes.AddRange(accesses.Where(ac => ac.ParentId == node.ID).ToList());
 
             insertingNodes.AddRange(await GetInsertList(accesses, childrenNodes));

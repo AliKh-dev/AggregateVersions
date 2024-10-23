@@ -58,11 +58,11 @@ namespace AggregateVersions.Presentation.Controllers
 
             try
             {
-                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
-                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
-
                 CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
                                     projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+
+                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
+                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""));
 
                 CreateOperationFolder(filesPath, operationFolderNames);
 
