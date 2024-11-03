@@ -11,5 +11,10 @@
         public string? FromVersion { get; set; }
         public string? ToVersion { get; set; }
         public string? ProjectName { get; set; }
+        public string? RequestFolder { get; set; }
+        public string? ClonePath { get; set; }
+        public string? CreationPath { get; set; }
+        public string? RootPath { get; set; }
+        public List<string> DatabaseFolderNames { get; set; } = [];
     }
 }

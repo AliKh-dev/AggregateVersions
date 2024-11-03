@@ -8,7 +8,7 @@
     };
 }
 
-<form asp-controller="Versions" asp-action="Index" method="post">
+<form id="projectForm" asp-controller="Versions" asp-action="Index" method="post">
     <div class="mb-4">
         <label class="form-label" asp-for="GitOnlineService">Git online service:</label>
         <select class="form-select" asp-for="GitOnlineService" asp-items="@(new SelectList(onlineServices, "Value", "Text"))">
@@ -68,8 +68,30 @@
     <div class="d-flex align-content-center justify-content-center">
         <button class="btn btn-success w-25" type="submit">Submit</button>
     </div>
+
 </form>
 
-<script>
-    
-</script>
+<div id="databaseModalContainer"></div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+                    $("#projectForm").submit(function (event) {
+                        event.preventDefault();
+
+                        $.ajax({
+                            url: '@Url.Action("Index", "Versions")',
+                            type: 'POST',
+                            data: $(this).serialize(),
+                            success: function (result) {
+                                $("#databaseModalContainer").html(result);
+                                $('#databaseModal').modal('show');
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error processing request:", error);
+                            }
+                        });
+                    });
+                });
+    </script>
+}

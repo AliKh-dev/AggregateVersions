@@ -1,0 +1,57 @@
+﻿@model ProjectVersionInfo
+
+<div class="modal fade" id="databaseModal" tabindex="-1" aria-labelledby="databaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="databaseModalLabel">Edit Database Folder Names</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="databaseModalForm" asp-action="ProcessDatabaseFolders" method="post">
+                    <input type="hidden" asp-for="GitOnlineService" value="@Model.GitOnlineService"  />
+                    <input type="hidden" asp-for="Username" value="@Model.Username"  />
+                    <input type="hidden" asp-for="AppPassword" value="@Model.AppPassword"  />
+                    <input type="hidden" asp-for="RepoName" value="@Model.RepoName"  />
+                    <input type="hidden" asp-for="BranchName" value="@Model.BranchName"  />
+                    <input type="hidden" asp-for="ProjectName" value="@Model.ProjectName"  />
+                    <input type="hidden" asp-for="RootPath" value="@Model.RootPath"  />
+                    <input type="hidden" asp-for="CreationPath" value="@Model.CreationPath"  />
+                    <input type="hidden" asp-for="ClonePath" value="@Model.ClonePath"  />
+                    <input type="hidden" asp-for="RequestFolder" value="@Model.RequestFolder"  />
+
+                    @for (int i = 0; i < Model.DatabaseFolderNames.Count; i++)
+                    {
+                        <div class="form-group">
+                            <label class="mb-2">Database Folder Name @(i+1)</label>
+                            <input type="text" class="form-control mb-3" name="DatabaseFolderNames[@i]"
+                                   value="@Model.DatabaseFolderNames[i]" placeholder="Enter folder name" />
+                        </div>
+                    }
+
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#databaseModalForm").submit(function (event) {
+        event.preventDefault();
+
+        $.ajax({
+            url: '@Url.Action("ProcessDatabaseFolders", "Versions")',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function (result) {
+                $('#databaseModal').modal('hide');
+            },
+            error: function (xhr, status, error) {
+                console.error("Error saving data:", error);
+            }
+        });
+    });
+</script>

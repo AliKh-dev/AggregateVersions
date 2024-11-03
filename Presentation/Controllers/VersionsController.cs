@@ -30,7 +30,7 @@ namespace AggregateVersions.Presentation.Controllers
 
         [Route("[action]")]
         [HttpPost]
-        public async Task<IActionResult> Index(ProjectVersionInfo projectVersionInfo)
+        public IActionResult Index(ProjectVersionInfo projectVersionInfo)
         {
             #region Bad Request
             if (string.IsNullOrEmpty(projectVersionInfo.GitOnlineService))
@@ -52,42 +52,91 @@ namespace AggregateVersions.Presentation.Controllers
                 return BadRequest("Project name must be provided.");
             #endregion
 
-            string rootPath = CreateFilesDirectoryInProject();
+            projectVersionInfo.RootPath = CreateFilesDirectoryInProject();
 
-            (string filesPath, string clonePath, string requestFolderName) = CreateEachRequestDirectory(rootPath, projectVersionInfo.ProjectName);
+            (projectVersionInfo.CreationPath, projectVersionInfo.ClonePath, projectVersionInfo.RequestFolder) = CreateEachRequestDirectory(projectVersionInfo.RootPath, projectVersionInfo.ProjectName);
 
             try
             {
-                CloneRepository(projectVersionInfo.GitOnlineService, projectVersionInfo.RepoName, clonePath,
-                                    projectVersionInfo.BranchName, projectVersionInfo.Username, projectVersionInfo.AppPassword);
+                CloneRepository(projectVersionInfo.GitOnlineService,
+                                projectVersionInfo.RepoName,
+                                projectVersionInfo.ClonePath,
+                                projectVersionInfo.BranchName,
+                                projectVersionInfo.Username,
+                                projectVersionInfo.AppPassword);
 
-                List<string> operationFolderNames = GetOperationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""), projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
-                List<string> applicationFolderNames = GetApplicationFolderNames(Path.Combine(clonePath, projectVersionInfo.VersionPath ?? ""), projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
+                string cloneVersionPath = Path.Combine(projectVersionInfo.ClonePath, projectVersionInfo.VersionPath ?? "");
 
-                CreateOperationFolder(filesPath, operationFolderNames);
+                projectVersionInfo.DatabaseFolderNames = GetDatabaseFolderNames(cloneVersionPath,
+                                                                                projectVersionInfo.FromVersion,
+                                                                                projectVersionInfo.ToVersion);
 
-                await CreateDatabaseFolders(filesPath, projectVersionInfo.ProjectName);
+                return PartialView("_DatabaseModal", projectVersionInfo);
+            }
+            catch (Exception e)
+            {
+                DeleteRequestDirectory(projectVersionInfo.RootPath, projectVersionInfo.RequestFolder);
+                return BadRequest(e.ToString());
+            }
+        }
 
-                CreateApplicationFolders(filesPath, applicationFolderNames);
+        [HttpPost]
+        public async Task<IActionResult> ProcessDatabaseFolders(ProjectVersionInfo projectVersionInfo)
+        {
+            #region Bad Request
+            if (string.IsNullOrEmpty(projectVersionInfo.ClonePath))
+                return BadRequest("Clone path is empty.");
 
-                await ChooseSubFolder(filesPath, clonePath, operationFolderNames, applicationFolderNames, projectVersionInfo.VersionPath ?? "", projectVersionInfo.ProjectName, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
+            if (string.IsNullOrEmpty(projectVersionInfo.CreationPath))
+                return BadRequest("Creation path is empty.");
 
-                DataBaseFolderVersion(filesPath);
+            if (string.IsNullOrEmpty(projectVersionInfo.ProjectName))
+                return BadRequest("Project Name is empty.");
 
-                ApplicationMergeFiles(filesPath);
+            if (string.IsNullOrEmpty(projectVersionInfo.RootPath))
+                return BadRequest("Root path is empty.");
 
-                byte[] fileContent = ZipLocalFolder(filesPath);
+            if (string.IsNullOrEmpty(projectVersionInfo.RequestFolder))
+                return BadRequest("RequestFolder name is empty.");
+            #endregion
 
-                DeleteRequestDirectory(rootPath, requestFolderName);
+            try
+            {
+                string cloneVersionPath = Path.Combine(projectVersionInfo.ClonePath, projectVersionInfo.VersionPath ?? "");
+
+                List<string> operationFolderNames = GetOperationFolderNames(cloneVersionPath,
+                                                                            projectVersionInfo.FromVersion,
+                                                                            projectVersionInfo.ToVersion);
+
+                List<string> applicationFolderNames = GetApplicationFolderNames(cloneVersionPath,
+                                                                                projectVersionInfo.FromVersion,
+                                                                                projectVersionInfo.ToVersion);
+
+                CreateOperationFolder(projectVersionInfo.CreationPath, operationFolderNames);
+
+                CreateDatabaseFolders(projectVersionInfo.CreationPath, projectVersionInfo.DatabaseFolderNames);
+
+                CreateApplicationFolders(projectVersionInfo.CreationPath, applicationFolderNames);
+
+                await ChooseSubFolder(projectVersionInfo.CreationPath, projectVersionInfo.ClonePath, operationFolderNames, applicationFolderNames, projectVersionInfo.VersionPath ?? "", projectVersionInfo.ProjectName, projectVersionInfo.FromVersion, projectVersionInfo.ToVersion);
+
+                DataBaseFolderVersion(projectVersionInfo.CreationPath);
+
+                ApplicationMergeFiles(projectVersionInfo.CreationPath);
+
+                byte[] fileContent = ZipLocalFolder(projectVersionInfo.CreationPath);
+
+                DeleteRequestDirectory(projectVersionInfo.RootPath, projectVersionInfo.RequestFolder);
 
                 return File(fileContent, "application/zip", fileDownloadName: "Operation.zip");
             }
             catch (Exception e)
             {
-                DeleteRequestDirectory(rootPath, requestFolderName);
+                DeleteRequestDirectory(projectVersionInfo.RootPath, projectVersionInfo.RequestFolder);
                 return BadRequest(e.ToString());
             }
         }
+
 
         [Route("[action]")]
         [HttpPost]
@@ -153,14 +202,15 @@ namespace AggregateVersions.Presentation.Controllers
             if (!Directory.Exists(clonePath))
                 Directory.CreateDirectory(clonePath);
 
-            Console.WriteLine($"Clone path: {clonePath}");
-            Console.WriteLine($"Creation path: {creationPath}");
-            Console.WriteLine($"Request path: {Path.Combine(requestFolderName)}");
-
             return (creationPath, clonePath, requestFolderName);
         }
 
-        private void CloneRepository(string gitOnlineService, string repoName, string clonePath, string branch, string username, string appPassword)
+        private void CloneRepository(string gitOnlineService,
+                                     string repoName,
+                                     string clonePath,
+                                     string branch,
+                                     string username,
+                                     string appPassword)
         {
             try
             {
@@ -254,13 +304,11 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task CreateDatabaseFolders(string localPath, string projectName)
+        private static void CreateDatabaseFolders(string localPath, List<string> databaseFolderNames)
         {
             try
             {
-                string[] databaseSubDirectories = await GetDatabaseFolderNames(projectName);
-
-                foreach (string databaseSubDirectory in databaseSubDirectories)
+                foreach (string databaseSubDirectory in databaseFolderNames)
                 {
                     string path = Path.Combine(localPath, "DataBases", databaseSubDirectory);
 
@@ -317,7 +365,14 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private async Task ChooseSubFolder(string localPath, string clonePath, List<string> operationFolderNames, List<string> applicationFolderNames, string versionsPath, string projectName, string? fromVersion, string? toVersion)
+        private async Task ChooseSubFolder(string localPath,
+                                           string clonePath,
+                                           List<string> operationFolderNames,
+                                           List<string> applicationFolderNames,
+                                           string versionsPath,
+                                           string projectName,
+                                           string? fromVersion,
+                                           string? toVersion)
         {
             try
             {
@@ -413,7 +468,10 @@ namespace AggregateVersions.Presentation.Controllers
             }
         }
 
-        private static void AggregateApplicationsFolders(string srcPath, string destPath, List<string> applicationFolderNames, string projectName)
+        private static void AggregateApplicationsFolders(string srcPath,
+                                                         string destPath,
+                                                         List<string> applicationFolderNames,
+                                                         string projectName)
         {
             try
             {
@@ -782,7 +840,6 @@ namespace AggregateVersions.Presentation.Controllers
 
             return branches["values"]!.Select(repository => repository["name"]!.ToString()).ToList();
         }
-        #endregion
 
         private List<string> GetOperationFolderNames(string path, string? fromVersion, string? toVersion)
         {
@@ -842,10 +899,10 @@ namespace AggregateVersions.Presentation.Controllers
 
         private List<string> GetApplicationFolderNames(string path, string? fromVersion, string? toVersion)
         {
-            string startDirectory = Path.Combine(path, fromVersion ?? "");
-            string endDirectory = Path.Combine(path, toVersion ?? "");
-
             List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
+
+            string startDirectory = Path.Combine(path, fromVersion ?? orderedDirectories.First());
+            string endDirectory = Path.Combine(path, toVersion ?? orderedDirectories.Last());
 
             List<string> folders = GetDirectoriesInRange(orderedDirectories, startDirectory, endDirectory);
 
@@ -857,7 +914,8 @@ namespace AggregateVersions.Presentation.Controllers
             foreach (string folder in folders) // each of version
             {
                 List<string> applicationFolders = Directory.GetDirectories(folder)
-                            .Where(dir => GetSimilarFolderName(Path.GetFileName(dir), folderNameConfig, "Applications") == "Applications").ToList();
+                            .Where(dir => GetSimilarFolderName(Path.GetFileName(dir), folderNameConfig, "Applications") == "Applications")
+                            .ToList();
 
                 foreach (string applicationFolder in applicationFolders)
                     applications.AddRange(Directory.GetDirectories(applicationFolder));
@@ -868,6 +926,49 @@ namespace AggregateVersions.Presentation.Controllers
             return applications;
         }
 
+        private List<string> GetDatabaseFolderNames(string path, string? fromVersion, string? toVersion)
+        {
+            List<string> orderedDirectories = [.. Directory.GetDirectories(path).OrderBy(name => name)];
+
+            string startDirectory = Path.Combine(path, fromVersion ?? orderedDirectories.First());
+            string endDirectory = Path.Combine(path, toVersion ?? orderedDirectories.Last());
+
+            List<string> versionFolders = GetDirectoriesInRange(orderedDirectories, startDirectory, endDirectory); // list of versions
+
+            List<string> databaseFolderNames = [];
+
+            FolderNameConfig folderNameConfig = new();
+            configuration.GetSection("Operations").Bind(folderNameConfig.FolderNames);
+
+            foreach (string versionFolder in versionFolders)
+            {
+                List<string> databaseFolders = Directory.GetDirectories(versionFolder)
+                            .Where(dir => GetSimilarFolderName(Path.GetFileName(dir), folderNameConfig, "DataBases") == "DataBases")
+                            .ToList();
+
+                foreach (string databaseFolder in databaseFolders)
+                {
+                    string[] subFolders = Directory.GetDirectories(databaseFolder);
+
+                    foreach (string subFolder in subFolders)
+                    {
+                        string subFolderName = Path.GetFileName(subFolder);
+                        string folderName;
+
+                        if (subFolderName.Contains('-'))
+                            folderName = subFolderName[(subFolderName.IndexOf('-') + 1)..];
+                        else
+                            folderName = subFolderName;
+
+                        if (!databaseFolderNames.Any(db => db.Contains(folderName)))
+                            databaseFolderNames.Add(subFolderName);
+                    }
+                }
+            }
+
+            return databaseFolderNames.OrderBy(name => name.First()).ToList();
+        }
+        #endregion
     }
 }
 
